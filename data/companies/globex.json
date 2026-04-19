@@ -1,0 +1,35 @@
+{
+  "id": "GLOBEX",
+  "name": "Globex Inc",
+  "description": "Conservative financial-services company. Stricter limits, tighter anomaly cutoffs.",
+  "grade_daily_limit": {
+    "Junior": 1000,
+    "Mid": 2500,
+    "Senior": 5000,
+    "Director": 20000
+  },
+  "category_daily_limit": {
+    "Client Meals": 3000,
+    "Entertainment": 2000,
+    "Food": 400,
+    "Fuel": 2500,
+    "Lodging": 5000,
+    "Office Supplies": 1500,
+    "Training": 8000,
+    "Travel": 2500
+  },
+  "category_restrictions": {
+    "Client Meals": [
+      "Sales"
+    ],
+    "Entertainment": [
+      "Sales"
+    ],
+    "Fuel": [
+      "Operations"
+    ]
+  },
+  "round_number_threshold": 3000,
+  "suspicious_threshold": 0.45,
+  "anomalous_threshold": 0.7
+}

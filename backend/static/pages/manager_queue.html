@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Review queue — ExpenseAI</title>
+  <link rel="stylesheet" href="/static/css/theme.css"/>
+  <style>
+    .queue-container { max-width: 1280px; margin: 0 auto; padding: 28px 32px; }
+    .queue-head {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+    }
+    .queue-head h1 { font-family: var(--font-serif); font-size: 28px; }
+    .filter-bar {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .fpill {
+      padding: 6px 14px; border-radius: var(--r-pill);
+      font-size: 12px; color: var(--text-secondary);
+      background: var(--bg-card); border: 1px solid var(--border-primary);
+      cursor: pointer; transition: all var(--dur-fast) var(--ease-out);
+    }
+    .fpill:hover { border-color: var(--border-secondary); }
+    .fpill.active { background: var(--accent-soft); color: var(--accent-hover);
+                    border-color: var(--accent-muted); font-weight: 500; }
+    .search {
+      margin-left: auto; padding: 8px 14px; width: 240px;
+      font-size: 13px; border: 1px solid var(--border-primary);
+      border-radius: var(--r-md); background: var(--bg-card); color: var(--text-primary);
+    }
+    .search:focus { outline: none; border-color: var(--border-focus); box-shadow: var(--shadow-focus); }
+
+    .score-cell { display: flex; align-items: center; gap: 8px; }
+    .score-bar { width: 60px; height: 4px; background: var(--bg-secondary); border-radius: 2px; overflow: hidden; }
+    .score-fill { height: 100%; transition: width 400ms var(--ease-out); }
+    .score-fill.low  { background: var(--ok); }
+    .score-fill.mid  { background: var(--warn); }
+    .score-fill.high { background: var(--danger); }
+
+    .dept-tag { padding: 2px 8px; background: var(--bg-inset); border-radius: var(--r-sm); font-size: 11px; color: var(--text-tertiary); }
+    .attach-flag {
+      display: inline-block; margin-left: 6px;
+      font-size: 10px; padding: 2px 7px;
+      background: var(--danger-soft); color: var(--danger);
+      border-radius: var(--r-pill);
+      letter-spacing: 0.02em;
+      cursor: help;
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+<div id="nav-holder"></div>
+
+<div class="queue-container">
+  <div class="queue-head animate-fade">
+    <div>
+      <h1>Claims review queue</h1>
+      <div class="text-muted text-sm" id="count-label">Loading claims...</div>
+    </div>
+    <div style="display:flex; gap:8px">
+      <button class="btn btn-secondary" onclick="location.href='/analytics'">View analytics</button>
+    </div>
+  </div>
+
+  <div class="filter-bar animate-slide-up">
+    <span class="text-xs text-muted" style="margin-right:4px">STATUS</span>
+    <div class="fpill active" data-status="ALL">All</div>
+    <div class="fpill" data-status="SUSPICIOUS">Suspicious</div>
+    <div class="fpill" data-status="REJECTED">Rejected</div>
+    <div class="fpill" data-status="FRAUDULENT">Fraudulent</div>
+    <div class="fpill" data-status="VALID">Valid</div>
+    <div class="fpill" data-attach="FLAGGED" style="border-color:var(--danger);color:var(--danger)">⚠ Attachment flagged</div>
+
+    <span style="width:1px; height:18px; background:var(--border-primary); margin: 0 6px"></span>
+    <span class="text-xs text-muted">DEPARTMENT</span>
+    <select class="select" id="dept-filter" style="width: auto"></select>
+
+    <input type="text" class="search" id="search" placeholder="Search claim ID or vendor..."/>
+  </div>
+
+  <div class="card" style="padding: 0; overflow: hidden;">
+    <div class="table-wrap" style="border: none">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Claim ID</th>
+            <th>Employee</th>
+            <th>Category</th>
+            <th>Amount</th>
+            <th>ML score</th>
+            <th>Verdict</th>
+            <th>Submitted</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="8"><div class="skeleton skel-line"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script src="/static/css/app.js"></script>
+<script>
+App.requireRole('manager','admin');
+App.mountNav('queue');
+
+let ALL = [];
+let FILTER_STATUS = 'ALL';
+let FILTER_DEPT = 'ALL';
+let FILTER_TEXT = '';
+let FILTER_ATTACH = 'ANY';  // 'ANY' or 'FLAGGED'
+
+async function boot() {
+  const [cfg, queue] = await Promise.all([
+    App.api('/api/config'),
+    App.api('/api/claims/queue?status=ALL&days=90'),
+  ]);
+  const depts = [...new Set(cfg.employees.map(e => e.department))].sort();
+  const sel = document.getElementById('dept-filter');
+  sel.innerHTML = '<option value="ALL">All departments</option>' +
+    depts.map(d => `<option>${d}</option>`).join('');
+  sel.addEventListener('change', e => { FILTER_DEPT = e.target.value; render(); });
+
+  ALL = queue.claims;
+  render();
+}
+
+function render() {
+  const rows = ALL.filter(c => {
+    if (FILTER_STATUS !== 'ALL' && c.verdict?.final_status !== FILTER_STATUS) return false;
+    if (FILTER_DEPT !== 'ALL' && c.department !== FILTER_DEPT) return false;
+    if (FILTER_ATTACH === 'FLAGGED' && !(c.flagged_attachments || []).length) return false;
+    if (FILTER_TEXT) {
+      const q = FILTER_TEXT.toLowerCase();
+      const hay = `${c.id} ${c.vendor} ${c.employee_name || ''}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('count-label').textContent =
+    `${rows.length} of ${ALL.length} claims in the last 90 days`;
+
+  const tbody = document.getElementById('tbody');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding:40px">
+        No claims match your filters.
+      </td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.slice(0, 100).map(c => {
+    const s = c.verdict?.ml_combined_score ?? 0;
+    const cls = s >= 0.7 ? 'high' : s >= 0.4 ? 'mid' : 'low';
+    return `
+      <tr onclick="location.href='/claim/${c.id}'">
+        <td class="mono text-sm">
+          ${c.id}
+          ${(c.flagged_attachments || []).length ? `<span class="attach-flag" title="Attachment failed validation: ${c.flagged_attachments.join(', ')}">⚠ attachment</span>` : ''}
+        </td>
+        <td>
+          ${App.escapeHtml(c.employee_name || c.employee_id)}
+          <span class="dept-tag">${App.escapeHtml(c.department || '')}</span>
+        </td>
+        <td>${App.escapeHtml(c.category)}</td>
+        <td>${App.money(c.amount)}</td>
+        <td>
+          <div class="score-cell">
+            <div class="score-bar"><div class="score-fill ${cls}" style="width:${(s*100).toFixed(0)}%"></div></div>
+            <span class="mono text-xs">${s.toFixed(2)}</span>
+          </div>
+        </td>
+        <td><span class="badge ${App.statusClass(c.verdict?.final_status)}">${c.verdict?.final_status || '—'}</span></td>
+        <td class="text-muted text-sm">${App.date(c.submitted_at)}</td>
+        <td>
+          <a href="/claim/${c.id}" class="btn btn-ghost btn-sm" onclick="event.stopPropagation()">View →</a>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+// Filter events
+document.querySelectorAll('.fpill').forEach(p => p.addEventListener('click', () => {
+  if (p.dataset.attach) {
+    // Toggle the attachment-flagged filter independently of status.
+    p.classList.toggle('active');
+    FILTER_ATTACH = p.classList.contains('active') ? 'FLAGGED' : 'ANY';
+  } else {
+    document.querySelectorAll('.fpill[data-status]').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+    FILTER_STATUS = p.dataset.status;
+  }
+  render();
+}));
+document.getElementById('search').addEventListener('input', e => {
+  FILTER_TEXT = e.target.value;
+  render();
+});
+
+boot().catch(e => App.toast('Error: ' + e.message, 'danger'));
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) boot().catch(err => App.toast('Error: ' + err.message, 'danger'));
+});
+</script>
+</body>
+</html>

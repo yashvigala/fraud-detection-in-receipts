@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin dashboard — ExpenseAI</title>
+  <link rel="stylesheet" href="/static/css/theme.css"/>
+  <style>
+    .dash-container { max-width: 1280px; margin: 0 auto; padding: 28px 32px; }
+    .dash-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .dash-head h1 {
+      font-family: var(--font-serif); font-size: 30px;
+      font-weight: 500; letter-spacing: -0.02em;
+    }
+    .dash-head .sub { color: var(--text-tertiary); font-size: 13px; margin-top: 2px; }
+    .stat-mini {
+      font-size: 12px; color: var(--text-tertiary); margin-top: 4px;
+    }
+    .chart-grid {
+      display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-top: 20px;
+    }
+    .donut-card { display: flex; flex-direction: column; gap: 12px; }
+    .legend {
+      display: grid; grid-template-columns: auto 1fr auto; gap: 8px 12px;
+      font-size: 13px; color: var(--text-secondary);
+    }
+    .legend .dot { width: 10px; height: 10px; border-radius: 2px; align-self: center; }
+    canvas { max-width: 100%; }
+
+    .recent-claims th, .recent-claims td { padding: 10px 14px; }
+  </style>
+</head>
+<body>
+
+<div class="page">
+<div id="nav-holder"></div>
+
+<div class="dash-container">
+
+  <div class="dash-head animate-fade">
+    <div>
+      <h1>Overview</h1>
+      <div class="sub" id="period-label">Last 30 days</div>
+    </div>
+    <div style="display:flex; gap:8px">
+      <a href="/analytics" class="btn btn-secondary">Deep-dive analytics</a>
+      <button class="btn btn-primary" id="download-pdf">
+        📄 Download PDF report
+      </button>
+    </div>
+  </div>
+
+  <div class="stat-grid stagger">
+    <div class="stat-card">
+      <div class="stat-label">TOTAL CLAIMS</div>
+      <div class="stat-value" id="s-total">—</div>
+      <div class="stat-mini" id="s-total-sub">in the last 30 days</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">TOTAL SPEND</div>
+      <div class="stat-value" id="s-spend">—</div>
+      <div class="stat-mini">across all departments</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">REVIEW QUEUE</div>
+      <div class="stat-value" id="s-queue">—</div>
+      <div class="stat-mini">awaiting manager decision</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">FRAUD RATE</div>
+      <div class="stat-value" id="s-fraud">—</div>
+      <div class="stat-mini" id="s-fraud-sub">of total claims</div>
+    </div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="card animate-slide-up">
+      <h2 class="card-title">Spend by department</h2>
+      <p class="card-subtitle">Total ₹ claimed per department in the period.</p>
+      <canvas id="dept-chart" height="180"></canvas>
+    </div>
+    <div class="card animate-slide-up donut-card">
+      <h2 class="card-title">Verdict mix</h2>
+      <p class="card-subtitle">Final-status distribution.</p>
+      <canvas id="status-chart" height="200"></canvas>
+      <div class="legend" id="status-legend"></div>
+    </div>
+  </div>
+
+  <div class="card animate-slide-up" style="margin-top: 20px">
+    <h2 class="card-title">Recent flagged claims</h2>
+    <p class="card-subtitle">Click any row to inspect the full pipeline for that claim.</p>
+    <div class="table-wrap" style="border: none">
+      <table class="data recent-claims">
+        <thead>
+          <tr><th>Claim ID</th><th>Employee</th><th>Category</th><th>Amount</th><th>Status</th><th>Submitted</th></tr>
+        </thead>
+        <tbody id="recent-tbody">
+          <tr><td colspan="6"><div class="skeleton skel-line"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="/static/css/app.js"></script>
+<script>
+App.requireRole('admin','manager');
+App.mountNav('dashboard');
+
+async function boot() {
+  const [stats, queue] = await Promise.all([
+    App.api('/api/admin/stats'),
+    App.api('/api/claims/queue?status=ALL&days=30'),
+  ]);
+  fillStats(stats);
+  renderDeptChart(stats.by_department);
+  renderStatusChart(stats);
+  renderRecent(queue.claims.slice(0, 8));
+}
+
+function fillStats(s) {
+  App.countUp(document.getElementById('s-total'), s.total_claims, 900);
+  const spend = document.getElementById('s-spend');
+  spend.textContent = '—';
+  const start = performance.now();
+  function anim(now) {
+    const p = Math.min(1, (now - start)/1000);
+    const e = 1 - Math.pow(1 - p, 3);
+    spend.textContent = App.money(s.total_amount * e);
+    if (p < 1) requestAnimationFrame(anim);
+    else spend.textContent = App.money(s.total_amount);
+  }
+  requestAnimationFrame(anim);
+
+  App.countUp(document.getElementById('s-queue'), s.review_queue_size, 700);
+
+  const total = s.total_claims || 1;
+  const fraud = s.rejected_count + s.fraudulent_count + Math.floor(s.suspicious_count * 0.5);
+  const pct = total ? (100 * fraud / total) : 0;
+  document.getElementById('s-fraud').textContent = pct.toFixed(1) + '%';
+  document.getElementById('s-fraud-sub').textContent =
+    `${s.valid_count} valid · ${s.suspicious_count} suspicious · ${s.rejected_count + s.fraudulent_count} rejected/fraudulent`;
+}
+
+function renderDeptChart(rows) {
+  const labels = rows.map(r => r.department);
+  const data   = rows.map(r => r.total_amount);
+  new Chart(document.getElementById('dept-chart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: '₹ total',
+        data,
+        backgroundColor: '#C15F3C',
+        borderRadius: 6,
+        borderSkipped: false,
+        maxBarThickness: 44,
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { ticks: { callback: v => '₹' + (v/1000).toFixed(0) + 'k' },
+             grid: { color: '#E8E5DF' }, border: { display: false }},
+        x: { grid: { display: false }, border: { display: false }},
+      },
+      animation: { duration: 900, easing: 'easeOutQuart' },
+    },
+  });
+}
+
+function renderStatusChart(s) {
+  const rows = [
+    ['VALID',      s.valid_count,      '#5B7C3E'],
+    ['SUSPICIOUS', s.suspicious_count, '#C18A3C'],
+    ['REJECTED',   s.rejected_count,   '#A84F30'],
+    ['FRAUDULENT', s.fraudulent_count, '#72243E'],
+  ];
+  new Chart(document.getElementById('status-chart'), {
+    type: 'doughnut',
+    data: {
+      labels: rows.map(r => r[0]),
+      datasets: [{ data: rows.map(r => r[1]), backgroundColor: rows.map(r => r[2]),
+                   borderColor: '#fff', borderWidth: 2, hoverOffset: 6 }],
+    },
+    options: {
+      cutout: '62%',
+      plugins: { legend: { display: false } },
+      animation: { duration: 900, easing: 'easeOutQuart' },
+    },
+  });
+  const total = rows.reduce((s,r) => s+r[1], 0) || 1;
+  document.getElementById('status-legend').innerHTML = rows.map(r => `
+    <span class="dot" style="background:${r[2]}"></span>
+    <span>${r[0]}</span>
+    <span class="mono" style="text-align:right">${r[1]} · ${(r[1]/total*100).toFixed(0)}%</span>
+  `).join('');
+}
+
+function renderRecent(claims) {
+  const tbody = document.getElementById('recent-tbody');
+  if (!claims.length) { tbody.innerHTML = `<tr><td colspan="6" class="text-muted text-center">No claims yet in this period.</td></tr>`; return; }
+  tbody.innerHTML = claims.map(c => `
+    <tr onclick="location.href='/claim/${c.id}'">
+      <td class="mono">${c.id}</td>
+      <td>${App.escapeHtml(c.employee_name || c.employee_id)}</td>
+      <td>${App.escapeHtml(c.category)}</td>
+      <td>${App.money(c.amount)}</td>
+      <td><span class="badge ${App.statusClass(c.verdict?.final_status)}">${App.escapeHtml(c.verdict?.final_status || '—')}</span></td>
+      <td class="text-muted">${App.datetime(c.submitted_at)}</td>
+    </tr>`).join('');
+}
+
+document.getElementById('download-pdf').addEventListener('click', () => {
+  App.toast('Generating PDF...');
+  window.open('/api/reports/pdf?days=30', '_blank');
+});
+
+boot().catch(e => App.toast('Error: ' + e.message, 'danger'));
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) boot().catch(err => App.toast('Error: ' + err.message, 'danger'));
+});
+</script>
+</body>
+</html>

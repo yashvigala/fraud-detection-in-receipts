@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Analytics — ExpenseAI</title>
+  <link rel="stylesheet" href="/static/css/theme.css"/>
+  <style>
+    .an-container { max-width: 1280px; margin: 0 auto; padding: 28px 32px; }
+    .an-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .an-head h1 { font-family: var(--font-serif); font-size: 30px; font-weight: 500; letter-spacing: -0.02em; }
+
+    .period-seg {
+      display: flex; gap: 4px; padding: 4px;
+      background: var(--bg-inset); border-radius: var(--r-md);
+    }
+    .period-seg button {
+      padding: 6px 14px; font-size: 12px; border: none;
+      background: transparent; color: var(--text-secondary);
+      border-radius: calc(var(--r-md) - 2px);
+      cursor: pointer; transition: all var(--dur-fast) var(--ease-out);
+    }
+    .period-seg button.active {
+      background: var(--bg-card); color: var(--text-primary); font-weight: 500;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+    @media (max-width: 900px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+    .dept-row { display: grid; grid-template-columns: 150px 1fr 70px; gap: 12px; align-items: center; padding: 10px 0; }
+    .dept-row:not(:last-child) { border-bottom: 1px solid var(--border-primary); }
+    .dept-bar { height: 8px; background: var(--bg-inset); border-radius: 4px; overflow: hidden; }
+    .dept-fill { height: 100%; background: linear-gradient(90deg, var(--ok), var(--warn), var(--danger)); transition: width 700ms var(--ease-out); }
+
+    .cat-bar { display: grid; grid-template-columns: 150px 1fr 100px; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-primary); }
+    .cat-bar:last-child { border-bottom: none; }
+    .cat-fill { height: 20px; background: var(--accent-muted); border-radius: 4px; transition: width 700ms var(--ease-out); }
+
+    canvas { max-width: 100%; }
+  </style>
+</head>
+<body>
+
+<div class="page">
+<div id="nav-holder"></div>
+
+<div class="an-container">
+
+  <div class="an-head animate-fade">
+    <div>
+      <h1>Analytics</h1>
+      <div class="text-muted text-sm" id="period-label">Last 90 days</div>
+    </div>
+    <div style="display:flex; gap:12px; align-items:center">
+      <div class="period-seg" id="period-seg">
+        <button data-days="30">30 days</button>
+        <button data-days="90" class="active">90 days</button>
+        <button data-days="365">1 year</button>
+      </div>
+      <button class="btn btn-primary" onclick="window.open('/api/reports/pdf?days=' + CURRENT_DAYS, '_blank')">
+        📄 Export PDF
+      </button>
+    </div>
+  </div>
+
+  <div class="grid-3" style="margin-bottom: 16px">
+    <div class="card animate-slide-up">
+      <h2 class="card-title">Spend + flagged over time</h2>
+      <p class="card-subtitle">Weekly aggregation. Orange line = total ₹ spent. Red bar = flagged claims (suspicious + rejected + fraudulent).</p>
+      <canvas id="trend-chart" height="110"></canvas>
+    </div>
+    <div class="card animate-slide-up">
+      <h2 class="card-title">Verdict distribution</h2>
+      <canvas id="pie-chart" height="160"></canvas>
+      <div id="pie-legend" style="font-size: 12px; color: var(--text-secondary); display: grid; gap: 6px; margin-top: 8px"></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card animate-slide-up">
+      <h2 class="card-title">Fraud rate by department</h2>
+      <p class="card-subtitle">Share of claims that were flagged or rejected.</p>
+      <div id="dept-list"></div>
+    </div>
+    <div class="card animate-slide-up">
+      <h2 class="card-title">Top categories by spend</h2>
+      <p class="card-subtitle">Largest spending categories across the period.</p>
+      <div id="cat-list"></div>
+    </div>
+  </div>
+
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="/static/css/app.js"></script>
+<script>
+App.requireRole('admin','manager');
+App.mountNav('analytics');
+
+let CURRENT_DAYS = 90;
+let TREND_CHART = null, PIE_CHART = null;
+
+document.querySelectorAll('#period-seg button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#period-seg button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    CURRENT_DAYS = Number(b.dataset.days);
+    document.getElementById('period-label').textContent = `Last ${CURRENT_DAYS} days`;
+    boot();
+  });
+});
+
+async function boot() {
+  const data = await App.api('/api/analytics/summary?days=' + CURRENT_DAYS);
+  renderTrend(data.trend);
+  renderPie(data.status_distribution);
+  renderDept(data.fraud_by_department);
+  renderCats(data.top_categories);
+}
+
+function renderTrend(rows) {
+  if (TREND_CHART) TREND_CHART.destroy();
+  TREND_CHART = new Chart(document.getElementById('trend-chart'), {
+    data: {
+      labels: rows.map(r => r.week),
+      datasets: [
+        {
+          type: 'line',
+          label: 'Total ₹ spent',
+          data: rows.map(r => r.amount),
+          borderColor: '#C15F3C',
+          backgroundColor: 'rgba(193, 95, 60, 0.08)',
+          fill: true, tension: 0.35,
+          pointRadius: 3, pointHoverRadius: 5,
+          yAxisID: 'y',
+        },
+        {
+          type: 'bar',
+          label: 'Flagged claims',
+          data: rows.map(r => r.flagged),
+          backgroundColor: 'rgba(168, 79, 48, 0.6)',
+          borderRadius: 4, maxBarThickness: 20,
+          yAxisID: 'y1',
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: true, labels: { font: { size: 11 } } } },
+      scales: {
+        y:  { beginAtZero: true, grid: { color: '#E8E5DF' }, ticks: { callback: v => '₹' + (v/1000).toFixed(0) + 'k' }, border: { display: false } },
+        y1: { beginAtZero: true, position: 'right', grid: { display: false }, border: { display: false } },
+        x:  { grid: { display: false }, border: { display: false } },
+      },
+      animation: { duration: 900, easing: 'easeOutQuart' },
+    },
+  });
+}
+
+function renderPie(dist) {
+  if (PIE_CHART) PIE_CHART.destroy();
+  const rows = [
+    ['VALID',      dist.VALID || 0,      '#5B7C3E'],
+    ['SUSPICIOUS', dist.SUSPICIOUS || 0, '#C18A3C'],
+    ['REJECTED',   dist.REJECTED || 0,   '#A84F30'],
+    ['FRAUDULENT', dist.FRAUDULENT || 0, '#72243E'],
+  ];
+  PIE_CHART = new Chart(document.getElementById('pie-chart'), {
+    type: 'doughnut',
+    data: { labels: rows.map(r => r[0]),
+            datasets: [{ data: rows.map(r => r[1]), backgroundColor: rows.map(r => r[2]),
+                         borderColor: '#fff', borderWidth: 2 }] },
+    options: { cutout: '62%', plugins: { legend: { display: false } }, animation: { duration: 900 } },
+  });
+  const total = rows.reduce((s,r) => s+r[1], 0) || 1;
+  document.getElementById('pie-legend').innerHTML = rows.map(r => `
+    <div style="display:flex; align-items:center; gap:8px">
+      <span style="width:10px; height:10px; border-radius:2px; background:${r[2]}"></span>
+      <span style="flex:1">${r[0]}</span>
+      <span class="mono">${r[1]} · ${(r[1]/total*100).toFixed(0)}%</span>
+    </div>`).join('');
+}
+
+function renderDept(rows) {
+  rows.sort((a,b) => b.fraud_rate - a.fraud_rate);
+  document.getElementById('dept-list').innerHTML = rows.map(d => `
+    <div class="dept-row">
+      <div>
+        <div style="font-size:13px; font-weight:500">${App.escapeHtml(d.department)}</div>
+        <div class="text-xs text-muted">${d.count} claims</div>
+      </div>
+      <div class="dept-bar"><div class="dept-fill" style="width:${(d.fraud_rate*100).toFixed(1)}%"></div></div>
+      <div class="mono text-sm" style="text-align: right">${(d.fraud_rate*100).toFixed(1)}%</div>
+    </div>`).join('');
+}
+
+function renderCats(cats) {
+  const max = Math.max(...cats.map(c => c.total), 1);
+  document.getElementById('cat-list').innerHTML = cats.map(c => `
+    <div class="cat-bar">
+      <div>
+        <div style="font-size:13px; font-weight:500">${App.escapeHtml(c.category)}</div>
+        <div class="text-xs text-muted">${c.count} claims</div>
+      </div>
+      <div><div class="cat-fill" style="width:${(c.total/max*100).toFixed(0)}%"></div></div>
+      <div class="mono text-sm" style="text-align: right">${App.money(c.total).replace('.00','')}</div>
+    </div>`).join('');
+}
+
+boot().catch(e => App.toast('Error: ' + e.message, 'danger'));
+</script>
+</body>
+</html>

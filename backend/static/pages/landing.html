@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ExpenseAI — AI-powered expense reports with fraud detection</title>
+  <link rel="stylesheet" href="/static/css/theme.css" />
+  <style>
+    .hero-wrap {
+      position: relative;
+      overflow: hidden;
+      padding: 48px 0 80px;
+      background:
+        radial-gradient(1200px 400px at 50% -200px, rgba(193, 95, 60, 0.15), transparent),
+        radial-gradient(800px 300px at 20% 0%, rgba(95, 122, 168, 0.08), transparent);
+    }
+    .hero { text-align: center; max-width: 780px; margin: 0 auto; padding: 32px 24px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 14px; border-radius: var(--r-pill);
+      background: var(--bg-card); border: 1px solid var(--border-primary);
+      font-size: 12px; color: var(--text-secondary);
+      margin-bottom: 28px;
+    }
+    .hero-badge .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-soft);
+      animation: pulse 2s infinite var(--ease-out);
+    }
+    .hero h1 {
+      font-size: 58px;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin-bottom: 20px;
+    }
+    .hero h1 em { font-style: italic; color: var(--accent); font-family: var(--font-serif); }
+    .hero .lede {
+      font-size: 18px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      max-width: 620px;
+      margin: 0 auto 32px;
+    }
+    .hero-actions {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    }
+    .stats-strip {
+      max-width: 900px; margin: 56px auto 0;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+      padding: 28px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--r-xl);
+      box-shadow: var(--shadow-sm);
+    }
+    .stats-strip .stat-num {
+      font-family: var(--font-serif);
+      font-size: 40px;
+      font-weight: 500;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .stats-strip .stat-label { font-size: 12px; color: var(--text-tertiary); letter-spacing: 0.04em; }
+    .stats-strip .col { text-align: center; position: relative; }
+    .stats-strip .col:not(:last-child)::after {
+      content: ''; position: absolute; right: -12px; top: 10%; bottom: 10%;
+      width: 1px; background: var(--border-primary);
+    }
+
+    .section-label {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin: 72px 0 20px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .pipeline {
+      max-width: 1080px; margin: 0 auto;
+      border: 1px solid var(--border-primary);
+      background: var(--bg-card);
+      border-radius: var(--r-xl);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .pipeline-head {
+      padding: 16px 24px; border-bottom: 1px solid var(--border-primary);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .pipeline-head p { font-size: 13px; color: var(--text-secondary); }
+    .pipeline-steps { display: grid; grid-template-columns: repeat(4, 1fr); }
+    .pipeline-step {
+      padding: 22px; border-right: 1px solid var(--border-primary);
+      transition: background var(--dur-med) var(--ease-out);
+    }
+    .pipeline-step:last-child { border-right: none; }
+    .pipeline-step:hover { background: var(--bg-inset); }
+    .step-num {
+      font-size: 11px; color: var(--text-tertiary); letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+    .step-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; color: var(--text-primary); }
+    .step-sub { font-size: 12px; color: var(--text-secondary); line-height: 1.4; margin-bottom: 10px; }
+    .step-chip {
+      display: inline-block; padding: 2px 8px; border-radius: var(--r-sm);
+      font-size: 10px; letter-spacing: 0.04em;
+    }
+
+    .features-grid {
+      max-width: 1080px; margin: 32px auto 0;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+      padding: 0 24px;
+    }
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--r-lg);
+      padding: 22px;
+      transition: all var(--dur-med) var(--ease-out);
+    }
+    .feature-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent-muted);
+      box-shadow: var(--shadow-md);
+    }
+    .feature-icon {
+      width: 42px; height: 42px; border-radius: var(--r-md);
+      display: grid; place-items: center;
+      background: var(--accent-soft);
+      color: var(--accent);
+      margin-bottom: 14px;
+      font-size: 18px;
+    }
+    .feature-card h3 {
+      font-family: var(--font-serif);
+      font-size: 17px;
+      margin-bottom: 6px;
+    }
+    .feature-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+
+    .cta-section {
+      margin: 80px auto 40px; max-width: 800px; text-align: center; padding: 40px 24px;
+    }
+    .cta-section h2 { font-size: 34px; margin-bottom: 14px; }
+    .cta-section p { color: var(--text-secondary); margin-bottom: 20px; }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 36px; }
+      .stats-strip { grid-template-columns: 1fr; gap: 20px; }
+      .stats-strip .col:not(:last-child)::after { display: none; }
+      .pipeline-steps, .features-grid { grid-template-columns: 1fr; }
+      .pipeline-step:not(:last-child) { border-right: none; border-bottom: 1px solid var(--border-primary); }
+    }
+  </style>
+</head>
+<body>
+
+<header class="nav animate-fade">
+  <a href="/" class="nav-brand">
+    <div class="nav-brand-mark">E</div>
+    ExpenseAI
+  </a>
+  <nav class="nav-links" style="margin-left: 32px">
+    <a class="nav-link" href="#how">How it works</a>
+    <a class="nav-link" href="#features">Features</a>
+    <a class="nav-link" href="/analytics" onclick="event.preventDefault(); App.toast('Sign in to view analytics')">Analytics</a>
+  </nav>
+  <div style="display:flex; gap:8px; align-items:center">
+    <a class="btn btn-ghost btn-sm" href="/login">Sign in</a>
+    <a class="btn btn-primary btn-sm" href="/login">Get started</a>
+  </div>
+</header>
+
+<main class="page">
+
+<section class="hero-wrap">
+  <div class="hero animate-slide-up">
+    <div class="hero-badge"><span class="dot"></span>Now with Gemini Flash 2.5 OCR + Drools policy engine</div>
+    <h1>Expense reports that <em>catch fraud</em><br/>before it happens.</h1>
+    <p class="lede">
+      Upload a receipt. Our AI extracts every field, checks your company policy,
+      and scores anomalies — all in under three seconds.
+    </p>
+    <div class="hero-actions">
+      <a href="/login" class="btn btn-primary btn-lg">Submit a claim →</a>
+      <a href="#how" class="btn btn-secondary btn-lg">See how it works</a>
+    </div>
+  </div>
+
+  <div class="stats-strip animate-slide-up" style="animation-delay: 0.2s">
+    <div class="col"><div class="stat-num" data-count="3">—</div><div class="stat-label">SECONDS AVG PROCESSING</div></div>
+    <div class="col"><div class="stat-num" data-count="99">—</div><div class="stat-label">% PRECISION ON FRAUD</div></div>
+    <div class="col"><div class="stat-num" data-count="25">—</div><div class="stat-label">POLICY RULES ENFORCED</div></div>
+  </div>
+</section>
+
+<p class="section-label" id="how">HOW IT WORKS</p>
+<div class="pipeline animate-slide-up">
+  <div class="pipeline-head">
+    <p>End-to-end pipeline — <span style="color:var(--text-tertiary)">receipt → verdict in 4 steps</span></p>
+  </div>
+  <div class="pipeline-steps stagger">
+    <div class="pipeline-step">
+      <div class="step-num">01 · EXTRACT</div>
+      <div class="step-title">OCR with Gemini Flash 2.5</div>
+      <div class="step-sub">Deskew, denoise, binarise, then LLM-powered field extraction — vendor, amount, date, category, line items.</div>
+      <span class="step-chip badge badge-info">Gemini · OpenCV</span>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">02 · POLICY</div>
+      <div class="step-title">Drools rule engine</div>
+      <div class="step-sub">25+ company policy rules, authored in DRL. Grade limits, category caps, categorically non-reimbursables.</div>
+      <span class="step-chip badge" style="background:#EEEDFE; color:#3C3489">Drools · Java</span>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">03 · ANOMALY</div>
+      <div class="step-title">IF + Autoencoder ensemble</div>
+      <div class="step-sub">Isolation Forest catches obvious outliers; the autoencoder finds subtle pattern deviations. F1 0.75.</div>
+      <span class="step-chip badge badge-warn">Python · scikit-learn</span>
+    </div>
+    <div class="pipeline-step">
+      <div class="step-num">04 · DECIDE</div>
+      <div class="step-title">Final verdict</div>
+      <div class="step-sub">Rule-override logic combines both engines: Valid · Suspicious · Rejected · Fraudulent — with a recommended action.</div>
+      <span class="step-chip badge badge-ok">FastAPI</span>
+    </div>
+  </div>
+</div>
+
+<p class="section-label" id="features">FEATURES</p>
+<div class="features-grid stagger">
+  <div class="feature-card">
+    <div class="feature-icon">⚡</div>
+    <h3>Smart OCR</h3>
+    <p>Handles skewed, low-contrast, handwritten receipts. OpenCV preprocessing + Gemini vision.</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">✓</div>
+    <h3>Policy compliance</h3>
+    <p>Company-specific Drools rules — lodging caps, per diem limits, mileage rates, non-reimbursables.</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">⚠</div>
+    <h3>Fraud detection</h3>
+    <p>Catches duplicates, weekend submissions, amount outliers, vendor-frequency anomalies.</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🔍</div>
+    <h3>Explainable</h3>
+    <p>Every verdict ships with reason codes — rule IDs, z-scores, top residuals. Fully auditable.</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">📊</div>
+    <h3>Real-time analytics</h3>
+    <p>Fraud rate by department, top violation types, trend charts, exportable PDF reports.</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">📞</div>
+    <h3>Upload-failure callbacks</h3>
+    <p>Twilio voice call on corrupt images or low OCR confidence — no claims lost to bad uploads.</p>
+  </div>
+</div>
+
+<section class="cta-section animate-slide-up">
+  <h2>Ready to see a demo?</h2>
+  <p>Pick a role and explore: submit as an employee, review as a manager, or configure rules as an admin.</p>
+  <a href="/login" class="btn btn-primary btn-lg">Launch demo →</a>
+</section>
+
+</main>
+
+<footer class="footer">
+  <span>ExpenseAI · B.Tech Final Year Project</span>
+  <span>Gemini + Drools + scikit-learn + FastAPI + SQLAlchemy</span>
+</footer>
+
+<script src="/static/css/app.js"></script>
+<script>
+  // Count-up animation on the stats strip
+  function animateCount(el, target, dur = 1200) {
+    const start = performance.now();
+    function tick(now) {
+      const p = Math.min(1, (now - start) / dur);
+      const e = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.floor(target * e);
+      if (p < 1) requestAnimationFrame(tick);
+      else el.textContent = target;
+    }
+    requestAnimationFrame(tick);
+  }
+  document.querySelectorAll('[data-count]').forEach(el => {
+    const t = Number(el.dataset.count);
+    setTimeout(() => animateCount(el, t), 400);
+  });
+</script>
+
+</body>
+</html>

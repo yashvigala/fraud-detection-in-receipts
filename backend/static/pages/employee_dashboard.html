@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>My claims — ExpenseAI</title>
+  <link rel="stylesheet" href="/static/css/theme.css"/>
+  <style>
+    .emp-container { max-width: 1100px; margin: 0 auto; padding: 28px 32px; }
+    .emp-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .emp-head h1 { font-family: var(--font-serif); font-size: 30px; font-weight: 500; letter-spacing: -0.02em; }
+    .emp-head .sub { color: var(--text-tertiary); font-size: 13px; margin-top: 2px; }
+
+    .welcome {
+      background:
+        linear-gradient(135deg, var(--accent-soft) 0%, var(--bg-card) 100%);
+      border: 1px solid var(--accent-muted);
+      border-radius: var(--r-lg);
+      padding: 24px 28px; margin-bottom: 24px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .welcome h2 { font-family: var(--font-serif); font-size: 22px; margin-bottom: 4px; }
+    .welcome p  { color: var(--text-secondary); font-size: 14px; }
+
+    .timeline-row {
+      display: grid; grid-template-columns: 14px 1fr auto;
+      gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--border-primary);
+      align-items: center; cursor: pointer;
+      transition: background var(--dur-fast) var(--ease-out);
+    }
+    .timeline-row:hover { background: var(--bg-inset); }
+    .timeline-row:last-child { border-bottom: none; }
+    .t-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      justify-self: center; margin-top: 6px;
+    }
+    .t-dot.VALID      { background: var(--ok); }
+    .t-dot.SUSPICIOUS { background: var(--warn); }
+    .t-dot.REJECTED   { background: var(--danger); }
+    .t-dot.FRAUDULENT { background: var(--danger); }
+    .t-meta { font-size: 13px; }
+    .t-meta .head { font-weight: 500; margin-bottom: 2px; }
+    .t-meta .sub  { color: var(--text-tertiary); font-size: 12px; }
+    .t-amount {
+      font-family: var(--font-serif); font-size: 20px; font-weight: 500;
+      text-align: right;
+    }
+    .t-amount.VALID      { color: var(--text-primary); }
+    .t-amount.REJECTED   { color: var(--danger); }
+    .t-amount.FRAUDULENT { color: var(--danger); }
+    .t-amount.SUSPICIOUS { color: var(--warn); }
+
+    .empty-state {
+      padding: 60px 24px; text-align: center;
+      color: var(--text-tertiary);
+    }
+    .empty-state .icon {
+      width: 60px; height: 60px; margin: 0 auto 16px;
+      border-radius: 50%; background: var(--accent-soft);
+      display: grid; place-items: center; font-size: 28px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+<div id="nav-holder"></div>
+
+<div class="emp-container">
+
+  <div class="welcome animate-fade">
+    <div>
+      <h2 id="welcome-h2">Welcome back</h2>
+      <p id="welcome-p">Your recent claims and their status.</p>
+    </div>
+    <a href="/employee/submit" class="btn btn-primary btn-lg">+ Submit new claim</a>
+  </div>
+
+  <div class="stat-grid stagger">
+    <div class="stat-card">
+      <div class="stat-label">SUBMITTED</div>
+      <div class="stat-value" id="s-total">—</div>
+      <div class="stat-mini">lifetime</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">APPROVED AMOUNT</div>
+      <div class="stat-value" id="s-approved">—</div>
+      <div class="stat-mini" id="s-approved-sub">reimbursed so far</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">PENDING REVIEW</div>
+      <div class="stat-value" id="s-pending">—</div>
+      <div class="stat-mini">with your manager</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">REJECTED</div>
+      <div class="stat-value" id="s-rejected">—</div>
+      <div class="stat-mini">not reimbursable</div>
+    </div>
+  </div>
+
+  <div class="card animate-slide-up" style="margin-top: 24px">
+    <h2 class="card-title">My claims</h2>
+    <p class="card-subtitle">Click any row to see the full pipeline output.</p>
+    <div id="list">
+      <div class="skeleton skel-line" style="margin-bottom: 8px"></div>
+      <div class="skeleton skel-line" style="margin-bottom: 8px"></div>
+      <div class="skeleton skel-line"></div>
+    </div>
+  </div>
+
+</div>
+
+</div>
+
+<script src="/static/css/app.js"></script>
+<script>
+const USER = App.requireRole('employee');
+App.mountNav('dashboard');
+
+document.getElementById('welcome-h2').textContent = `Hi, ${USER.employee_name?.split(' ')[0] || 'there'}.`;
+document.getElementById('welcome-p').textContent = `${USER.company_name} · ${USER.department} · ${USER.grade} grade`;
+
+async function boot() {
+  const data = await App.api('/api/claims/mine');
+  const claims = data.claims;
+  fillStats(claims);
+  renderList(claims);
+}
+
+function fillStats(claims) {
+  const total = claims.length;
+  let approved = 0, pending = 0, rejected = 0, approvedAmount = 0;
+  claims.forEach(c => {
+    const s = c.verdict?.final_status;
+    if (s === 'VALID') { approved++; approvedAmount += c.amount; }
+    else if (s === 'SUSPICIOUS' || !c.verdict?.reviewed_at && (s === 'SUSPICIOUS' || s === 'FRAUDULENT')) pending++;
+    if (s === 'REJECTED' || s === 'FRAUDULENT') rejected++;
+  });
+  App.countUp(document.getElementById('s-total'), total, 600);
+  const approvedEl = document.getElementById('s-approved');
+  approvedEl.textContent = App.money(0);
+  const start = performance.now();
+  function anim(now) {
+    const p = Math.min(1, (now - start)/900);
+    const e = 1 - Math.pow(1 - p, 3);
+    approvedEl.textContent = App.money(approvedAmount * e);
+    if (p < 1) requestAnimationFrame(anim); else approvedEl.textContent = App.money(approvedAmount);
+  }
+  requestAnimationFrame(anim);
+  App.countUp(document.getElementById('s-pending'), pending, 600);
+  App.countUp(document.getElementById('s-rejected'), rejected, 600);
+}
+
+function renderList(claims) {
+  const el = document.getElementById('list');
+  if (!claims.length) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📥</div>
+        <h3 style="font-family: var(--font-serif); font-size: 20px; color: var(--text-primary); margin-bottom: 6px">No claims yet</h3>
+        <p>Submit your first receipt to see it here.</p>
+        <a href="/employee/submit" class="btn btn-primary" style="margin-top: 16px">Submit a claim</a>
+      </div>`;
+    return;
+  }
+  el.innerHTML = claims.map(c => {
+    const s = c.verdict?.final_status || 'VALID';
+    return `
+      <div class="timeline-row" onclick="location.href='/claim/${c.id}'">
+        <div class="t-dot ${s}"></div>
+        <div class="t-meta">
+          <div class="head">${App.escapeHtml(c.vendor || '—')} · ${App.escapeHtml(c.category)}</div>
+          <div class="sub">${App.date(c.submitted_at)} ·
+            <span class="badge ${App.statusClass(s)}">${s}</span>
+            ${c.verdict?.reviewer_comment ? ' · "' + App.escapeHtml(c.verdict.reviewer_comment.slice(0,40)) + '"' : ''}
+          </div>
+        </div>
+        <div class="t-amount ${s}">${App.money(c.amount)}</div>
+      </div>`;
+  }).join('');
+}
+
+boot().catch(e => App.toast('Error: ' + e.message, 'danger'));
+
+// If the user returns to this page via back/forward (bfcache), the scripts
+// don't re-run by default — so stale data stays on screen. Re-fetch on
+// pageshow whenever the browser served it from the bfcache.
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) boot().catch(err => App.toast('Error: ' + err.message, 'danger'));
+});
+</script>
+</body>
+</html>

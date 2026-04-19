@@ -1,0 +1,326 @@
+package com.expense.rules
+
+import com.expense.model.ExpenseClaim;
+import com.expense.model.Violation;
+
+global java.util.List results;
+
+// ================================================================
+// MORGAN STANLEY EXPENSE POLICY — DROOLS RULE ENGINE
+// Version: 2.0
+// Each rule adds a Violation(ruleId, severity, deduction, reason)
+// Final status is computed by Spring Boot controller after all rules fire
+// Severity: HARD (always reject) | SOFT (flag for review)
+// ================================================================
+
+
+// ================================================================
+// SECTION 1 — RECEIPT & DOCUMENTATION
+// ================================================================
+
+rule "R001 - Receipt required"
+    salience 100
+when
+    $c : ExpenseClaim(perDiem == false, receiptAttached == false)
+then
+    $c.addViolation(new Violation("R001", "HARD", 100, "Receipt missing — mandatory for all non-per-diem claims"));
+    $c.setHardReject(true);
+end
+
+rule "R002 - Justification required above threshold"
+    salience 90
+when
+    $c : ExpenseClaim(amount > 2000, justificationText == null || justificationText == "")
+then
+    $c.addViolation(new Violation("R002", "SOFT", 20, "No justification provided for claim above ₹2000"));
+end
+
+
+// ================================================================
+// SECTION 2 — LODGING (₹6000/night cap, Mumbai)
+// ================================================================
+
+rule "R010 - Lodging exceeds Mumbai cap"
+    salience 90
+when
+    $c : ExpenseClaim(expenseCategory == "LODGING", amount > 6000)
+then
+    $c.addViolation(new Violation("R010", "HARD", 100, "Hotel amount ₹" + $c.getAmount() + " exceeds ₹6000/night cap"));
+    $c.setHardReject(true);
+end
+
+rule "R011 - Lodging not pre-approved"
+    salience 80
+when
+    $c : ExpenseClaim(expenseCategory == "LODGING", preApprovalAttached == false)
+then
+    $c.addViolation(new Violation("R011", "SOFT", 30, "Lodging requires pre-approval — flagged for manager review"));
+end
+
+rule "R012 - Extended lodging without business trip flag"
+    salience 70
+when
+    $c : ExpenseClaim(expenseCategory == "LODGING", businessTrip == false)
+then
+    $c.addViolation(new Violation("R012", "HARD", 100, "Lodging only reimbursable during business travel"));
+    $c.setHardReject(true);
+end
+
+
+// ================================================================
+// SECTION 3 — AIR TRAVEL
+// ================================================================
+
+rule "R020 - Non-economy airfare without approval"
+    salience 100
+when
+    $c : ExpenseClaim(expenseCategory == "AIR_TRAVEL",
+                      fareClass in ("BUSINESS", "FIRST"),
+                      preApprovalAttached == false)
+then
+    $c.addViolation(new Violation("R020", "HARD", 100, "Business/First class not permitted without VP-level pre-approval"));
+    $c.setHardReject(true);
+end
+
+rule "R021 - Domestic airfare above cap"
+    salience 80
+when
+    $c : ExpenseClaim(expenseCategory == "AIR_TRAVEL",
+                      amount > 15000,
+                      preApprovalAttached == false)
+then
+    $c.addViolation(new Violation("R021", "SOFT", 40, "Domestic airfare ₹" + $c.getAmount() + " exceeds ₹15000 threshold"));
+end
+
+rule "R022 - International airfare above cap"
+    salience 80
+when
+    $c : ExpenseClaim(expenseCategory == "AIR_TRAVEL",
+                      international == true,
+                      amount > 80000,
+                      preApprovalAttached == false)
+then
+    $c.addViolation(new Violation("R022", "SOFT", 50, "International airfare ₹" + $c.getAmount() + " exceeds ₹80000 — requires Director approval"));
+end
+
+
+// ================================================================
+// SECTION 4 — GROUND TRANSPORT
+// ================================================================
+
+rule "R030 - Airport transfer exceeds limit"
+    salience 70
+when
+    $c : ExpenseClaim(expenseCategory == "AIRPORT_TRANSFER", amount > 800)
+then
+    $c.addViolation(new Violation("R030", "SOFT", 25, "Airport transfer ₹" + $c.getAmount() + " exceeds ₹800 limit"));
+end
+
+rule "R031 - Mileage not documented"
+    salience 90
+when
+    $c : ExpenseClaim(expenseCategory == "MILEAGE", mileageDocumented == false)
+then
+    $c.addViolation(new Violation("R031", "HARD", 100, "Mileage claim must include start/end location and odometer proof"));
+    $c.setHardReject(true);
+end
+
+rule "R032 - Mileage rate exceeds ₹12/km"
+    salience 90
+when
+    $c : ExpenseClaim(expenseCategory == "MILEAGE", ratePerKm > 12)
+then
+    $c.addViolation(new Violation("R032", "HARD", 100, "Claimed rate ₹" + $c.getRatePerKm() + "/km exceeds ₹12/km policy rate"));
+    $c.setHardReject(true);
+end
+
+rule "R033 - Office commute claimed as mileage"
+    salience 100
+when
+    $c : ExpenseClaim(expenseCategory == "MILEAGE", commute == true)
+then
+    $c.addViolation(new Violation("R033", "HARD", 100, "Home-to-office commute is not reimbursable"));
+    $c.setHardReject(true);
+end
+
+rule "R034 - Car rental without approval"
+    salience 90
+when
+    $c : ExpenseClaim(expenseCategory == "CAR_RENTAL", preApprovalAttached == false)
+then
+    $c.addViolation(new Violation("R034", "HARD", 100, "Car rental requires manager pre-approval"));
+    $c.setHardReject(true);
+end
+
+rule "R035 - Car rental daily rate exceeds cap"
+    salience 80
+when
+    $c : ExpenseClaim(expenseCategory == "CAR_RENTAL", amount > 2500)
+then
+    $c.addViolation(new Violation("R035", "SOFT", 35, "Car rental ₹" + $c.getAmount() + " exceeds ₹2500/day cap"));
+end
+
+rule "R036 - Luxury car class not permitted"
+    salience 90
+when
+    $c : ExpenseClaim(expenseCategory == "CAR_RENTAL",
+                      rentalCarClass not in ("ECONOMY", "COMPACT", "INTERMEDIATE"))
+then
+    $c.addViolation(new Violation("R036", "HARD", 100, "Only Economy/Compact/Intermediate car classes are reimbursable"));
+    $c.setHardReject(true);
+end
+
+
+// ================================================================
+// SECTION 5 — MEALS & PER DIEM
+// ================================================================
+
+rule "R040 - Per diem exceeds ₹3000/day"
+    salience 90
+when
+    $c : ExpenseClaim(perDiem == true, amount > 3000)
+then
+    $c.addViolation(new Violation("R040", "HARD", 100, "Per diem ₹" + $c.getAmount() + " exceeds ₹3000/day maximum"));
+    $c.setHardReject(true);
+end
+
+rule "R041 - Per diem on non-business day"
+    salience 90
+when
+    $c : ExpenseClaim(perDiem == true, businessTrip == false)
+then
+    $c.addViolation(new Violation("R041", "HARD", 100, "Per diem only applicable during approved business travel"));
+    $c.setHardReject(true);
+end
+
+rule "R042 - Individual meal exceeds ₹1000"
+    salience 70
+when
+    $c : ExpenseClaim(expenseCategory == "MEAL", amount > 1000)
+then
+    $c.addViolation(new Violation("R042", "SOFT", 30, "Meal ₹" + $c.getAmount() + " exceeds ₹1000 per-meal guideline"));
+end
+
+rule "R043 - Team meal without attendee list"
+    salience 80
+when
+    $c : ExpenseClaim(expenseCategory == "MEAL",
+                      teamMeal == true,
+                      attendeeListAttached == false)
+then
+    $c.addViolation(new Violation("R043", "SOFT", 40, "Team meal requires attendee list with business purpose"));
+end
+
+
+// ================================================================
+// SECTION 6 — INTERNET & COMMUNICATION
+// ================================================================
+
+rule "R050 - Internet not pre-approved"
+    salience 80
+when
+    $c : ExpenseClaim(expenseCategory == "INTERNET", preApprovalAttached == false)
+then
+    $c.addViolation(new Violation("R050", "HARD", 100, "Internet/data expenses require IT department pre-approval"));
+    $c.setHardReject(true);
+end
+
+rule "R051 - Internet exceeds ₹500/day"
+    salience 70
+when
+    $c : ExpenseClaim(expenseCategory == "INTERNET", amount > 500)
+then
+    $c.addViolation(new Violation("R051", "SOFT", 20, "Internet ₹" + $c.getAmount() + " exceeds ₹500/day limit"));
+end
+
+
+// ================================================================
+// SECTION 7 — STRICTLY NON-REIMBURSABLE
+// ================================================================
+
+rule "R060 - Categorically non-reimbursable expense"
+    salience 110
+when
+    $c : ExpenseClaim(expenseCategory in (
+        "ENTERTAINMENT",
+        "GYM",
+        "TRAFFIC_FINE",
+        "APPAREL",
+        "PERSONAL_INSURANCE",
+        "IN_ROOM_MOVIE",
+        "AIRLINE_UPGRADE",
+        "MINIBAR",
+        "GAMBLING",
+        "POLITICAL_DONATION",
+        "GIFT_PERSONAL"
+    ))
+then
+    $c.addViolation(new Violation("R060", "HARD", 100,
+        $c.getExpenseCategory() + " is categorically non-reimbursable per Morgan Stanley policy"));
+    $c.setHardReject(true);
+end
+
+
+// ================================================================
+// SECTION 8 — DUPLICATE DETECTION
+// ================================================================
+
+rule "R070 - Potential duplicate submission"
+    salience 85
+when
+    $c : ExpenseClaim(duplicateFlagged == true)
+then
+    $c.addViolation(new Violation("R070", "SOFT", 60,
+        "Duplicate detected: same vendor + amount within 3 days for this employee"));
+end
+
+
+// ================================================================
+// SECTION 9 — WEEKEND / HOLIDAY SUBMISSION
+// ================================================================
+
+rule "R080 - Weekend submission without business justification"
+    salience 60
+when
+    $c : ExpenseClaim(weekendSubmission == true,
+                      businessTrip == false,
+                      justificationText == null || justificationText == "")
+then
+    $c.addViolation(new Violation("R080", "SOFT", 15,
+        "Weekend expense submission with no business travel context — requires justification"));
+end
+
+
+// ================================================================
+// SECTION 10 — FINAL STATUS (fires last, salience 0)
+// ================================================================
+
+rule "R090 - Approve if no violations"
+    salience 0
+when
+    $c : ExpenseClaim(violations.size() == 0)
+then
+    $c.setStatus("APPROVED");
+    $c.setPolicyDecision("PASS");
+    results.add($c);
+end
+
+rule "R091 - Flag if only soft violations"
+    salience 0
+when
+    $c : ExpenseClaim(hardReject == false, violations.size() > 0)
+then
+    $c.setStatus("FLAGGED");
+    $c.setPolicyDecision("SOFT_FAIL");
+    results.add($c);
+end
+
+rule "R092 - Reject if any hard violation"
+    salience 0
+when
+    $c : ExpenseClaim(hardReject == true)
+then
+    $c.setStatus("REJECTED");
+    $c.setPolicyDecision("HARD_FAIL");
+    results.add($c);
+end

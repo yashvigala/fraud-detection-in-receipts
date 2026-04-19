@@ -1,0 +1,34 @@
+{
+  "id": "ACME",
+  "name": "ACME Corporation",
+  "description": "Mid-sized IT services company. Standard policy.",
+  "grade_daily_limit": {
+    "Junior": 150,
+    "Mid": 300,
+    "Senior": 600,
+    "Director": 1500
+  },
+  "category_daily_limit": {
+    "Client Meals": 400,
+    "Entertainment": 300,
+    "Food": 50,
+    "Fuel": 300,
+    "Lodging": 600,
+    "Office Supplies": 200,
+    "Training": 1000,
+    "Travel": 200
+  },
+  "category_restrictions": {
+    "Client Meals": [
+      "Marketing",
+      "Sales"
+    ],
+    "Entertainment": [
+      "Marketing",
+      "Sales"
+    ]
+  },
+  "round_number_threshold": 50,
+  "suspicious_threshold": 0.5,
+  "anomalous_threshold": 0.59
+}

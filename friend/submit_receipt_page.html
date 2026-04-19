@@ -1,0 +1,177 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.page{background:var(--color-background-tertiary);padding:24px}
+.topbar{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.back-btn{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--color-text-secondary);cursor:pointer;background:none;border:none;padding:0}
+.back-arrow{width:16px;height:16px;border:0.5px solid var(--color-border-secondary);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px}
+.page-title{font-size:16px;font-weight:500;color:var(--color-text-primary)}
+.layout{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start}
+.main-col{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:20px}
+.card-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:16px}
+.upload-zone{border:1.5px dashed var(--color-border-secondary);border-radius:10px;padding:32px;text-align:center;cursor:pointer;background:var(--color-background-secondary)}
+.upload-icon{width:40px;height:40px;background:#E6F1FB;border-radius:10px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center}
+.upload-zone h4{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px}
+.upload-zone p{font-size:12px;color:var(--color-text-secondary)}
+.upload-zone em{color:#185FA5;font-style:normal}
+.ocr-preview{margin-top:12px;border:0.5px solid var(--color-border-tertiary);border-radius:8px;overflow:hidden}
+.ocr-header{padding:8px 12px;background:var(--color-background-secondary);border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:space-between}
+.ocr-header span{font-size:11px;color:var(--color-text-secondary)}
+.ocr-badge{font-size:10px;padding:2px 8px;background:#EAF3DE;color:#27500A;border-radius:4px}
+.ocr-fields{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.ocr-field{padding:8px 12px;border-bottom:0.5px solid var(--color-border-tertiary);border-right:0.5px solid var(--color-border-tertiary)}
+.ocr-field:nth-child(even){border-right:none}
+.ocr-field:nth-last-child(-n+2){border-bottom:none}
+.ocr-label{font-size:10px;color:var(--color-text-tertiary);margin-bottom:2px}
+.ocr-value{font-size:12px;color:var(--color-text-primary);font-weight:500}
+.conf-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.conf-high{background:#639922}
+.conf-med{background:#EF9F27}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.full{grid-column:1/-1}
+.form-label{font-size:12px;color:var(--color-text-secondary)}
+.form-group input,.form-group select,.form-group textarea{font-size:13px;color:var(--color-text-primary);background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:6px;padding:7px 10px;width:100%}
+.form-group textarea{resize:vertical;min-height:56px;font-family:var(--font-sans)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-label{font-size:13px;color:var(--color-text-primary)}
+.toggle-sub{font-size:11px;color:var(--color-text-secondary)}
+.toggle{width:32px;height:18px;background:var(--color-border-secondary);border-radius:9px;position:relative;cursor:pointer;flex-shrink:0}
+.toggle.on{background:#185FA5}
+.toggle-thumb{width:14px;height:14px;background:white;border-radius:50%;position:absolute;top:2px;left:2px;transition:transform .15s}
+.toggle.on .toggle-thumb{transform:translateX(14px)}
+.side-col{display:flex;flex-direction:column;gap:12px}
+.status-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:16px}
+.status-title{font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:12px}
+.status-item{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.s-done{background:#639922}
+.s-active{background:#185FA5}
+.s-pending{background:var(--color-border-secondary)}
+.status-item span{font-size:12px;color:var(--color-text-primary)}
+.status-item .s-label{font-size:11px;color:var(--color-text-secondary)}
+.verdict-card{background:var(--color-background-primary);border:2px solid var(--color-border-info);border-radius:12px;padding:16px}
+.verdict-label{font-size:11px;color:var(--color-text-secondary);margin-bottom:6px}
+.verdict-value{font-size:20px;font-weight:500;color:#185FA5;margin-bottom:8px}
+.verdict-score{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.score-bar-wrap{flex:1;height:6px;background:var(--color-background-secondary);border-radius:3px;overflow:hidden}
+.score-bar{height:100%;width:12%;background:#639922;border-radius:3px}
+.score-num{font-size:12px;color:var(--color-text-secondary);min-width:30px;text-align:right}
+.reason-item{display:flex;align-items:flex-start;gap:6px;margin-bottom:6px}
+.reason-dot{width:6px;height:6px;border-radius:50%;background:#639922;flex-shrink:0;margin-top:4px}
+.reason-text{font-size:11px;color:var(--color-text-secondary)}
+.submit-btn{width:100%;padding:10px;background:#185FA5;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-weight:500}
+.hint{font-size:11px;color:var(--color-text-tertiary);text-align:center;margin-top:6px}
+</style>
+
+<div class="page">
+  <div class="topbar">
+    <button class="back-btn">
+      <div class="back-arrow">&#8592;</div>
+    </button>
+    <span class="page-title">Submit expense</span>
+  </div>
+
+  <div class="layout">
+    <div class="main-col">
+
+      <div class="card">
+        <div class="card-title">Receipt upload</div>
+        <div class="upload-zone">
+          <div class="upload-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 13V4M10 4L7 7M10 4L13 7" stroke="#185FA5" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 14v1a2 2 0 002 2h8a2 2 0 002-2v-1" stroke="#185FA5" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </div>
+          <h4>Drop your receipt here</h4>
+          <p>JPEG or PNG · Max 10MB · <em>Browse files</em></p>
+        </div>
+
+        <div class="ocr-preview" style="margin-top:14px">
+          <div class="ocr-header">
+            <span>OCR extracted fields</span>
+            <span class="ocr-badge">Gemini Flash 2.0</span>
+          </div>
+          <div class="ocr-fields">
+            <div class="ocr-field"><div class="ocr-label">Vendor</div><div class="ocr-value"><span class="conf-dot conf-high"></span>Taj Lands End Mumbai</div></div>
+            <div class="ocr-field"><div class="ocr-label">Amount</div><div class="ocr-value"><span class="conf-dot conf-high"></span>₹7,450.00</div></div>
+            <div class="ocr-field"><div class="ocr-label">Date</div><div class="ocr-value"><span class="conf-dot conf-high"></span>2025-11-14</div></div>
+            <div class="ocr-field"><div class="ocr-label">Category</div><div class="ocr-value"><span class="conf-dot conf-med"></span>LODGING</div></div>
+            <div class="ocr-field"><div class="ocr-label">Tax</div><div class="ocr-value"><span class="conf-dot conf-high"></span>₹674.55</div></div>
+            <div class="ocr-field"><div class="ocr-label">Currency</div><div class="ocr-value"><span class="conf-dot conf-high"></span>INR</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Claim details</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Employee ID</label>
+            <input type="text" value="EMP_2847" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Department</label>
+            <select><option>Technology</option><option>Finance</option><option>Operations</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Expense category</label>
+            <select><option>LODGING</option><option>MEAL</option><option>AIR_TRAVEL</option><option>MILEAGE</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Amount (INR)</label>
+            <input type="text" value="7450.00" />
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Business justification</label>
+            <textarea>Client meeting — Accenture Mumbai office, 3-day engagement</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Flags</div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">Business trip</div><div class="toggle-sub">This expense relates to approved business travel</div></div>
+          <div class="toggle on"><div class="toggle-thumb"></div></div>
+        </div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">Pre-approval attached</div><div class="toggle-sub">Manager has approved this category in advance</div></div>
+          <div class="toggle"><div class="toggle-thumb"></div></div>
+        </div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">Per diem</div><div class="toggle-sub">Flat daily allowance instead of itemised receipts</div></div>
+          <div class="toggle"><div class="toggle-thumb"></div></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="side-col">
+
+      <div class="status-card">
+        <div class="status-title">Processing status</div>
+        <div class="status-item"><div class="status-dot s-done"></div><div><span>Image preprocessed</span><div class="s-label">Deskew + denoise complete</div></div></div>
+        <div class="status-item"><div class="status-dot s-done"></div><div><span>OCR complete</span><div class="s-label">6 fields extracted, conf 0.91</div></div></div>
+        <div class="status-item"><div class="status-dot s-active"></div><div><span>Policy check running</span><div class="s-label">Drools evaluating rules…</div></div></div>
+        <div class="status-item"><div class="status-dot s-pending"></div><div><span>Anomaly detection</span><div class="s-label">Waiting for policy result</div></div></div>
+        <div class="status-item"><div class="status-dot s-pending"></div><div><span>Final verdict</span><div class="s-label">Pending</div></div></div>
+      </div>
+
+      <div class="verdict-card">
+        <div class="verdict-label">Preliminary verdict</div>
+        <div class="verdict-value">SUSPICIOUS</div>
+        <div class="verdict-score">
+          <div class="score-bar-wrap"><div class="score-bar" style="width:72%;background:#EF9F27"></div></div>
+          <span class="score-num">0.72</span>
+        </div>
+        <div class="reason-item"><div class="reason-dot" style="background:#EF9F27"></div><div class="reason-text">Hotel ₹7,450 exceeds ₹6,000/night cap (R010)</div></div>
+        <div class="reason-item"><div class="reason-dot" style="background:#EF9F27"></div><div class="reason-text">Lodging requires pre-approval (R011)</div></div>
+      </div>
+
+      <button class="submit-btn">Submit for review</button>
+      <div class="hint">Submitting will notify your manager and create an audit log entry</div>
+
+    </div>
+  </div>
+</div>

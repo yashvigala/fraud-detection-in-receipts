@@ -1,0 +1,230 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.dash{background:var(--color-background-tertiary);padding:0;font-family:var(--font-sans)}
+.sidebar{width:200px;background:var(--color-background-primary);border-right:0.5px solid var(--color-border-tertiary);padding:16px 0;position:absolute;top:0;left:0;bottom:0}
+.content{margin-left:200px;padding:20px}
+.wrap{display:flex;position:relative;min-height:700px}
+.sb-logo{display:flex;align-items:center;gap:8px;padding:8px 16px 16px}
+.sb-logo-icon{width:24px;height:24px;background:#185FA5;border-radius:5px}
+.sb-logo-text{font-size:14px;font-weight:500;color:var(--color-text-primary)}
+.sb-section{font-size:10px;color:var(--color-text-tertiary);padding:8px 16px 4px;letter-spacing:0.06em}
+.sb-item{display:flex;align-items:center;gap:8px;padding:7px 16px;font-size:13px;color:var(--color-text-secondary);cursor:pointer}
+.sb-item.active{background:var(--color-background-secondary);color:var(--color-text-primary)}
+.sb-item svg{width:14px;height:14px;opacity:0.6}
+.sb-badge{margin-left:auto;background:#E6F1FB;color:#0C447C;font-size:10px;padding:1px 6px;border-radius:10px}
+.sb-divider{height:0.5px;background:var(--color-border-tertiary);margin:8px 16px}
+.sb-user{display:flex;align-items:center;gap:8px;padding:8px 16px;margin-top:auto;position:absolute;bottom:16px;left:0;right:0}
+.avatar{width:28px;height:28px;border-radius:50%;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#0C447C;flex-shrink:0}
+.sb-user-info p{font-size:12px;font-weight:500;color:var(--color-text-primary)}
+.sb-user-info span{font-size:10px;color:var(--color-text-tertiary)}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.page-header h1{font-size:18px;font-weight:500;color:var(--color-text-primary)}
+.header-actions{display:flex;gap:8px}
+.btn-sm{padding:6px 12px;font-size:12px;border:0.5px solid var(--color-border-secondary);border-radius:6px;background:transparent;cursor:pointer;color:var(--color-text-primary)}
+.btn-sm-primary{padding:6px 12px;font-size:12px;border:none;border-radius:6px;background:#185FA5;cursor:pointer;color:white}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.metric{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:14px}
+.metric-label{font-size:11px;color:var(--color-text-secondary);margin-bottom:6px}
+.metric-value{font-size:22px;font-weight:500;color:var(--color-text-primary)}
+.metric-sub{font-size:11px;color:var(--color-text-tertiary);margin-top:2px}
+.metric-sub.up{color:#3B6D11}
+.metric-sub.warn{color:#854F0B}
+.filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.filter-btn{padding:5px 12px;font-size:12px;border:0.5px solid var(--color-border-tertiary);border-radius:20px;background:transparent;cursor:pointer;color:var(--color-text-secondary)}
+.filter-btn.active{background:var(--color-background-info);border-color:var(--color-border-info);color:var(--color-text-info)}
+.filter-sep{width:0.5px;height:18px;background:var(--color-border-tertiary)}
+.search-box{padding:5px 10px;font-size:12px;border:0.5px solid var(--color-border-tertiary);border-radius:6px;background:var(--color-background-secondary);color:var(--color-text-primary);margin-left:auto;width:160px}
+.table-wrap{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:10px;overflow:hidden}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+thead tr{background:var(--color-background-secondary)}
+th{padding:9px 12px;font-size:11px;font-weight:500;color:var(--color-text-secondary);text-align:left;border-bottom:0.5px solid var(--color-border-tertiary)}
+td{padding:9px 12px;font-size:12px;color:var(--color-text-primary);border-bottom:0.5px solid var(--color-border-tertiary)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--color-background-secondary)}
+.status-pill{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500}
+.s-valid{background:#EAF3DE;color:#27500A}
+.s-suspicious{background:#FAEEDA;color:#633806}
+.s-rejected{background:#FCEBEB;color:#791F1F}
+.s-fraudulent{background:#FBEAF0;color:#72243E}
+.score-bar-sm{height:4px;border-radius:2px;background:var(--color-background-secondary);width:60px;display:inline-block;vertical-align:middle;overflow:hidden}
+.score-fill{height:100%;border-radius:2px}
+.action-btn{padding:3px 8px;font-size:11px;border:0.5px solid var(--color-border-secondary);border-radius:4px;background:transparent;cursor:pointer;color:var(--color-text-secondary);margin-right:4px}
+.action-btn.approve{border-color:#3B6D11;color:#3B6D11}
+.action-btn.reject{border-color:#A32D2D;color:#A32D2D}
+.dept-tag{display:inline-block;padding:1px 6px;background:var(--color-background-secondary);border-radius:3px;font-size:10px;color:var(--color-text-tertiary)}
+</style>
+
+<div class="dash">
+<div class="wrap">
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon"></div>
+      <span class="sb-logo-text">ExpenseAI</span>
+    </div>
+    <div class="sb-section">REVIEW</div>
+    <div class="sb-item active">
+      <svg viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+      All claims<span class="sb-badge">34</span>
+    </div>
+    <div class="sb-item">
+      <svg viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M7 4.5V7l1.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Pending review<span class="sb-badge">8</span>
+    </div>
+    <div class="sb-item">
+      <svg viewBox="0 0 14 14" fill="none"><path d="M7 1.5L12.5 4.5V9.5L7 12.5L1.5 9.5V4.5L7 1.5Z" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 7l2 2L9.5 5.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Approved
+    </div>
+    <div class="sb-section">ANALYTICS</div>
+    <div class="sb-item">
+      <svg viewBox="0 0 14 14" fill="none"><path d="M2 11L5 7l3 2 4-5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Trends
+    </div>
+    <div class="sb-item">
+      <svg viewBox="0 0 14 14" fill="none"><rect x="1.5" y="4" width="3" height="8.5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="5.5" y="1.5" width="3" height="11" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="9.5" y="6" width="3" height="6.5" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+      Fraud report
+    </div>
+    <div class="sb-divider"></div>
+    <div class="sb-item">
+      <svg viewBox="0 0 14 14" fill="none"><circle cx="7" cy="4.5" r="2.5" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 12.5c0-2.485 2.462-4.5 5.5-4.5s5.5 2.015 5.5 4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Team settings
+    </div>
+    <div class="sb-user">
+      <div class="avatar">RS</div>
+      <div class="sb-user-info"><p>Rahul Shah</p><span>Finance Manager</span></div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-header">
+      <h1>Claims review</h1>
+      <div class="header-actions">
+        <button class="btn-sm">Export PDF</button>
+        <button class="btn-sm-primary">Download report</button>
+      </div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-label">Total submitted</div>
+        <div class="metric-value">34</div>
+        <div class="metric-sub">This month</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Total amount</div>
+        <div class="metric-value">₹2.4L</div>
+        <div class="metric-sub up">Within dept budget</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Flagged / rejected</div>
+        <div class="metric-value">7</div>
+        <div class="metric-sub warn">3 need your review</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Fraud score avg</div>
+        <div class="metric-value">0.18</div>
+        <div class="metric-sub up">Low risk overall</div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <button class="filter-btn active">All (34)</button>
+      <button class="filter-btn">Valid (24)</button>
+      <button class="filter-btn">Suspicious (6)</button>
+      <button class="filter-btn">Rejected (3)</button>
+      <button class="filter-btn">Fraudulent (1)</button>
+      <div class="filter-sep"></div>
+      <input class="search-box" type="text" placeholder="Search employee, vendor…" />
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <colgroup>
+          <col style="width:80px">
+          <col style="width:110px">
+          <col style="width:130px">
+          <col style="width:80px">
+          <col style="width:70px">
+          <col style="width:100px">
+          <col style="width:80px">
+          <col style="width:120px">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Claim ID</th>
+            <th>Employee</th>
+            <th>Vendor</th>
+            <th>Amount</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Score</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="color:var(--color-text-tertiary);font-size:11px">CLM-10291</td>
+            <td>Priya Nair <div class="dept-tag">Technology</div></td>
+            <td style="font-size:11px">Taj Lands End</td>
+            <td>₹7,450</td>
+            <td style="font-size:11px">LODGING</td>
+            <td><span class="status-pill s-rejected">REJECTED</span></td>
+            <td><div class="score-bar-sm"><div class="score-fill" style="width:91%;background:#E24B4A"></div></div></td>
+            <td><button class="action-btn">Review</button></td>
+          </tr>
+          <tr>
+            <td style="color:var(--color-text-tertiary);font-size:11px">CLM-10289</td>
+            <td>Arjun Mehta <div class="dept-tag">Technology</div></td>
+            <td style="font-size:11px">IndiGo Airlines</td>
+            <td>₹11,200</td>
+            <td style="font-size:11px">AIR_TRAVEL</td>
+            <td><span class="status-pill s-valid">VALID</span></td>
+            <td><div class="score-bar-sm"><div class="score-fill" style="width:8%;background:#639922"></div></div></td>
+            <td><button class="action-btn approve">Approve</button></td>
+          </tr>
+          <tr>
+            <td style="color:var(--color-text-tertiary);font-size:11px">CLM-10285</td>
+            <td>Sneha Rao <div class="dept-tag">Finance</div></td>
+            <td style="font-size:11px">Swiggy Business</td>
+            <td>₹1,340</td>
+            <td style="font-size:11px">MEAL</td>
+            <td><span class="status-pill s-suspicious">SUSPICIOUS</span></td>
+            <td><div class="score-bar-sm"><div class="score-fill" style="width:62%;background:#EF9F27"></div></div></td>
+            <td><button class="action-btn">Review</button></td>
+          </tr>
+          <tr>
+            <td style="color:var(--color-text-tertiary);font-size:11px">CLM-10283</td>
+            <td>Dev Kapoor <div class="dept-tag">Operations</div></td>
+            <td style="font-size:11px">Ola Corporate</td>
+            <td>₹620</td>
+            <td style="font-size:11px">AIRPORT_TRANSFER</td>
+            <td><span class="status-pill s-valid">VALID</span></td>
+            <td><div class="score-bar-sm"><div class="score-fill" style="width:5%;background:#639922"></div></div></td>
+            <td><button class="action-btn approve">Approve</button></td>
+          </tr>
+          <tr>
+            <td style="color:var(--color-text-tertiary);font-size:11px">CLM-10280</td>
+            <td>Meera Das <div class="dept-tag">Technology</div></td>
+            <td style="font-size:11px">Fuel Station</td>
+            <td>₹3,200</td>
+            <td style="font-size:11px">MILEAGE</td>
+            <td><span class="status-pill s-fraudulent">FRAUDULENT</span></td>
+            <td><div class="score-bar-sm"><div class="score-fill" style="width:95%;background:#D4537E"></div></div></td>
+            <td><button class="action-btn reject">Reject</button></td>
+          </tr>
+          <tr>
+            <td style="color:var(--color-text-tertiary);font-size:11px">CLM-10278</td>
+            <td>Karan Singh <div class="dept-tag">Finance</div></td>
+            <td style="font-size:11px">Novotel Mumbai</td>
+            <td>₹5,800</td>
+            <td style="font-size:11px">LODGING</td>
+            <td><span class="status-pill s-valid">VALID</span></td>
+            <td><div class="score-bar-sm"><div class="score-fill" style="width:11%;background:#639922"></div></div></td>
+            <td><button class="action-btn approve">Approve</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>

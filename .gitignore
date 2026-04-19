@@ -1,0 +1,91 @@
+# =============================================================
+#  SECRETS — NEVER COMMIT
+# =============================================================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+
+# =============================================================
+#  Python
+# =============================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+build/
+develop-eggs/
+dist/
+eggs/
+.eggs/
+*.egg-info/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# =============================================================
+#  Java / Maven (policy-service/)
+# =============================================================
+policy-service/target/
+policy-service/.mvn/wrapper/maven-wrapper.jar
+*.class
+*.jar
+*.war
+
+# =============================================================
+#  Datasets & generated artefacts (regenerate via scripts/)
+# =============================================================
+data/sroie/
+data/sroie_src/
+data/synthetic/test_receipts/
+data/synthetic/claims.csv
+data/processed/
+data/app.db
+data/app.db-journal
+data/*.pdf
+# Keep the small test-policy PDFs under version control by un-ignoring them:
+!data/test_policy.pdf
+!data/test_policy_apex.pdf
+!data/test_policy_pixel.pdf
+!data/test_policy_buildco.pdf
+
+# =============================================================
+#  Trained models (regenerate with scripts/train_models.py)
+# =============================================================
+models/*.joblib
+models/metrics*.json
+
+# =============================================================
+#  Jupyter
+# =============================================================
+.ipynb_checkpoints
+
+# =============================================================
+#  IDE
+# =============================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*.iml
+
+# =============================================================
+#  OS
+# =============================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =============================================================
+#  Node (if frontend ever gets a build step)
+# =============================================================
+node_modules/

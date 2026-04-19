@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign in — ExpenseAI</title>
+  <link rel="stylesheet" href="/static/css/theme.css" />
+  <style>
+    body { overflow: hidden; }
+    .split {
+      display: grid; grid-template-columns: 1fr 1fr;
+      min-height: 100vh;
+    }
+    .split-left {
+      background:
+        radial-gradient(800px 500px at 30% 30%, rgba(193, 95, 60, 0.25), transparent),
+        radial-gradient(600px 400px at 70% 80%, rgba(95, 122, 168, 0.18), transparent),
+        linear-gradient(135deg, #F7EAE2 0%, #F6F4EE 100%);
+      background-size: 300% 300%;
+      animation: gradientShift 15s ease infinite;
+      padding: 60px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      position: relative; overflow: hidden;
+    }
+    .split-left::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(transparent 98%, rgba(31,30,29,0.05) 98%) 0 0 / 48px 48px,
+        linear-gradient(90deg, transparent 98%, rgba(31,30,29,0.05) 98%) 0 0 / 48px 48px;
+      pointer-events: none;
+    }
+    .split-left > * { position: relative; z-index: 1; }
+    .brand-big {
+      display: flex; align-items: center; gap: 12px;
+      font-family: var(--font-serif); font-size: 22px; font-weight: 600;
+    }
+    .brand-big .nav-brand-mark { width: 36px; height: 36px; font-size: 17px; }
+
+    .tagline h1 {
+      font-size: 42px;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+    .tagline h1 em { font-family: var(--font-serif); font-style: italic; color: var(--accent); }
+    .tagline p { font-size: 15px; color: var(--text-secondary); max-width: 420px; }
+    .pills {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-top: 24px;
+    }
+    .pill {
+      padding: 5px 12px; font-size: 11px; border-radius: var(--r-pill);
+      background: var(--bg-card); border: 1px solid var(--border-primary);
+      color: var(--text-secondary);
+    }
+
+    .split-right {
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px; background: var(--bg-card);
+    }
+    .auth-card {
+      width: 100%; max-width: 420px;
+      animation: slideUp 0.5s var(--ease-out);
+    }
+    .auth-card h2 {
+      font-family: var(--font-serif); font-size: 30px;
+      margin-bottom: 8px;
+    }
+    .auth-card .sub { color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; }
+
+    .segmented {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 4px; background: var(--bg-inset); padding: 4px;
+      border-radius: var(--r-md); margin-bottom: 20px;
+    }
+    .segmented button {
+      padding: 10px; font-size: 13px; border: none;
+      background: transparent; color: var(--text-secondary);
+      border-radius: calc(var(--r-md) - 2px);
+      cursor: pointer; transition: all var(--dur-fast) var(--ease-out);
+    }
+    .segmented button:hover { color: var(--text-primary); }
+    .segmented button.active {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-weight: 500;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .company-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      margin-bottom: 18px;
+    }
+    .company-tile {
+      padding: 14px;
+      background: var(--bg-card);
+      border: 1.5px solid var(--border-primary);
+      border-radius: var(--r-md);
+      cursor: pointer;
+      transition: all var(--dur-fast) var(--ease-out);
+    }
+    .company-tile:hover { border-color: var(--border-secondary); background: var(--bg-inset); }
+    .company-tile.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: var(--shadow-focus);
+    }
+    .company-tile .title { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+    .company-tile .descr { font-size: 11px; color: var(--text-tertiary); line-height: 1.4; }
+
+    #employee-picker { margin-bottom: 20px; }
+    .hint-text {
+      font-size: 11px; color: var(--text-tertiary);
+      background: var(--bg-inset);
+      border-left: 2px solid var(--border-secondary);
+      padding: 8px 12px;
+      border-radius: var(--r-sm);
+      margin-top: 14px;
+    }
+    #msg { min-height: 16px; margin-top: 12px; font-size: 12px; color: var(--danger); }
+  </style>
+</head>
+<body>
+
+<div class="split">
+  <div class="split-left">
+    <div class="brand-big animate-fade">
+      <div class="nav-brand-mark">E</div>
+      ExpenseAI
+    </div>
+
+    <div class="tagline animate-slide-up">
+      <h1>Pick a role.<br/>Explore the <em>whole pipeline</em>.</h1>
+      <p>This is a demo — no passwords, no signup. Choose a role + company and you'll land on that persona's dashboard.</p>
+      <div class="pills">
+        <span class="pill">Employee · submit receipts</span>
+        <span class="pill">Manager · review queue</span>
+        <span class="pill">Admin · configure rules</span>
+      </div>
+    </div>
+
+    <p style="font-size: 12px; color: var(--text-tertiary);">
+      Final year project · Gemini · Drools · ML ensemble · FastAPI · SQLAlchemy
+    </p>
+  </div>
+
+  <div class="split-right">
+    <div class="auth-card">
+      <h2>Sign in to ExpenseAI</h2>
+      <p class="sub">Pick a role, a company, and (for employees) which employee you are.</p>
+
+      <label class="field-label">I'm signing in as</label>
+      <div class="segmented" id="role-seg">
+        <button data-role="employee" class="active">Employee</button>
+        <button data-role="manager">Manager</button>
+        <button data-role="admin">Admin</button>
+      </div>
+
+      <label class="field-label">Company</label>
+      <div class="company-grid" id="company-grid">
+        <div class="skeleton" style="height: 70px;"></div>
+        <div class="skeleton" style="height: 70px;"></div>
+      </div>
+
+      <div id="employee-picker" style="display:none">
+        <label class="field-label">Employee</label>
+        <select class="select" id="employee-select"></select>
+      </div>
+
+      <button class="btn btn-primary btn-lg" id="signin-btn" style="width: 100%">
+        Continue →
+      </button>
+
+      <p id="msg"></p>
+
+      <div class="hint-text">
+        💡 <strong>Tip:</strong> pick the same company across tabs to simulate a real workflow (employee submits → manager reviews → admin configures).
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/css/app.js"></script>
+<script>
+  let ROLE = 'employee';
+  let SELECTED_COMPANY = null;
+  let COMPANIES = [];
+
+  async function boot() {
+    const data = await App.api('/api/auth/options');
+    COMPANIES = data.companies;
+    renderCompanies();
+  }
+  function renderCompanies() {
+    const el = document.getElementById('company-grid');
+    el.innerHTML = COMPANIES.map(c => `
+      <div class="company-tile ${SELECTED_COMPANY === c.id ? 'selected' : ''}"
+           data-id="${c.id}">
+        <div class="title">${App.escapeHtml(c.name)}</div>
+        <div class="descr">${App.escapeHtml(c.description || '')}</div>
+      </div>
+    `).join('');
+    el.querySelectorAll('.company-tile').forEach(t => {
+      t.addEventListener('click', () => {
+        SELECTED_COMPANY = t.dataset.id;
+        renderCompanies();
+        renderEmployeePicker();
+      });
+    });
+    // Auto-select first company
+    if (!SELECTED_COMPANY && COMPANIES.length) {
+      SELECTED_COMPANY = COMPANIES[0].id;
+      renderCompanies();
+      renderEmployeePicker();
+    }
+  }
+  function renderEmployeePicker() {
+    const box = document.getElementById('employee-picker');
+    const sel = document.getElementById('employee-select');
+    if (ROLE !== 'employee') { box.style.display = 'none'; return; }
+    box.style.display = '';
+    const comp = COMPANIES.find(c => c.id === SELECTED_COMPANY);
+    if (!comp) return;
+    sel.innerHTML = comp.sample_employees.map(e =>
+      `<option value="${e.id}">${e.id} — ${App.escapeHtml(e.name)} (${e.department} · ${e.grade})</option>`
+    ).join('');
+  }
+
+  document.querySelectorAll('#role-seg button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#role-seg button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      ROLE = btn.dataset.role;
+      renderEmployeePicker();
+    });
+  });
+
+  document.getElementById('signin-btn').addEventListener('click', async () => {
+    const msg = document.getElementById('msg');
+    msg.textContent = '';
+    if (!SELECTED_COMPANY) { msg.textContent = 'Pick a company first.'; return; }
+    const body = { role: ROLE, company_id: SELECTED_COMPANY };
+    if (ROLE === 'employee') {
+      body.employee_id = document.getElementById('employee-select').value;
+    }
+    try {
+      const btn = document.getElementById('signin-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Signing in...';
+      const res = await App.api('/api/auth/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      // Route based on role
+      const dest = {
+        employee: '/employee/dashboard',
+        manager:  '/manager/queue',
+        admin:    '/admin/dashboard',
+      }[res.user.role] || '/';
+      location.href = dest;
+    } catch (e) {
+      msg.textContent = e.message;
+      document.getElementById('signin-btn').disabled = false;
+      document.getElementById('signin-btn').textContent = 'Continue →';
+    }
+  });
+
+  boot();
+</script>
+</body>
+</html>

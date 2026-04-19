@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Drools module descriptor.
+  Defines one KieBase ("expenseKBase") that loads every .drl file under
+  the src/main/resources/rules/ folder, and a default stateful KieSession
+  ("expenseKSession") we instantiate per evaluation request.
+-->
+<kmodule xmlns="http://www.drools.org/xsd/kmodule">
+  <kbase name="expenseKBase" packages="rules" default="true">
+    <ksession name="expenseKSession" type="stateful" default="true"/>
+  </kbase>
+</kmodule>

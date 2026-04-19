@@ -1,0 +1,6 @@
+{
+  "description": "Maps each synthetic employee_id to their company_id. 50/50 split: EMP00000-49 -> ACME, EMP00050-99 -> GLOBEX.",
+  "default_company": "ACME",
+  "rule": "numeric_half",
+  "split_at": 50
+}

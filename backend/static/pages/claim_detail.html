@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Claim detail — ExpenseAI</title>
+  <link rel="stylesheet" href="/static/css/theme.css"/>
+  <style>
+    .detail-container { max-width: 1200px; margin: 0 auto; padding: 24px 32px; }
+    .crumb { font-size: 12px; color: var(--text-tertiary); margin-bottom: 14px; }
+    .crumb a { color: var(--text-secondary); }
+
+    .layout { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+    .verdict-hero {
+      border-radius: var(--r-lg);
+      padding: 20px 24px;
+      border: 1.5px solid;
+      margin-bottom: 16px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .verdict-hero.valid      { background: var(--ok-soft);     border-color: #A9C28A; }
+    .verdict-hero.suspicious { background: var(--warn-soft);   border-color: #DCBF8A; }
+    .verdict-hero.rejected   { background: var(--danger-soft); border-color: #D9A99B; }
+    .verdict-hero.fraudulent { background: var(--danger-soft); border-color: #D9A99B; }
+
+    .verdict-label { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.7; }
+    .verdict-big   { font-size: 32px; font-family: var(--font-serif); font-weight: 500; margin: 2px 0; }
+    .verdict-sub   { font-size: 13px; opacity: 0.85; }
+    .verdict-score { text-align: right; }
+    .verdict-score .num { font-size: 38px; font-family: var(--font-serif); line-height: 1; }
+
+    .ocr-grid { display: grid; grid-template-columns: 180px 1fr; gap: 20px; }
+    @media (max-width: 600px) { .ocr-grid { grid-template-columns: 1fr; } }
+
+    .receipt-box {
+      background: var(--bg-inset);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--r-md);
+      padding: 10px;
+      display: flex; flex-direction: column; gap: 8px; text-align: center;
+    }
+    .receipt-box img { width: 100%; max-height: 280px; object-fit: contain; border-radius: 4px; background: white; }
+
+    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .field {
+      padding: 10px 12px;
+      background: var(--bg-inset);
+      border-radius: var(--r-md);
+    }
+    .field .fl { font-size: 10px; color: var(--text-tertiary); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+    .field .fv { font-size: 14px; font-weight: 500; }
+
+    .rule-hit {
+      display: grid; grid-template-columns: 48px 60px 1fr; gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-primary);
+      align-items: flex-start;
+    }
+    .rule-hit:last-child { border-bottom: none; }
+    .r-icon { width: 32px; height: 32px; border-radius: 6px; display: grid; place-items: center;
+              font-size: 12px; font-weight: 600; }
+    .r-icon.HARD { background: var(--danger-soft); color: var(--danger); }
+    .r-icon.SOFT { background: var(--warn-soft);   color: var(--warn); }
+    .r-id  { font-family: var(--mono); font-size: 12px; color: var(--text-tertiary); padding-top: 8px; }
+    .r-body .reason { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+    .r-body .name   { font-size: 12px; color: var(--text-tertiary); }
+
+    .anomaly-row { display: flex; align-items: center; gap: 10px; padding: 8px 0;
+                   border-bottom: 1px solid var(--border-primary); }
+    .anomaly-row:last-child { border-bottom: none; }
+    .anomaly-name { flex: 0 0 180px; font-size: 13px; }
+    .anomaly-bar  { flex: 1; height: 5px; background: var(--bg-secondary); border-radius: 3px; overflow: hidden; }
+    .anomaly-fill { height: 100%; background: linear-gradient(90deg, var(--ok), var(--warn), var(--danger));
+                    transition: width 500ms var(--ease-out); }
+    .anomaly-val  { width: 42px; text-align: right; font-family: var(--mono); font-size: 12px; color: var(--text-secondary); }
+
+    .meta-row { display: flex; justify-content: space-between; padding: 7px 0;
+                border-bottom: 1px solid var(--border-primary); }
+    .meta-row:last-child { border-bottom: none; }
+    .meta-k { font-size: 12px; color: var(--text-secondary); }
+    .meta-v { font-size: 12px; font-weight: 500; }
+
+    .action-panel .btn { width: 100%; margin-bottom: 6px; }
+    .comment-ta { width: 100%; min-height: 70px; margin-bottom: 6px; }
+
+    .audit-item { display: flex; gap: 10px; padding: 8px 0; }
+    .audit-dot  { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: 7px; flex-shrink: 0; }
+    .audit-dot.ok { background: var(--ok); }
+    .audit-dot.bad { background: var(--danger); }
+    .audit-body p { font-size: 13px; }
+    .audit-body span { font-size: 11px; color: var(--text-tertiary); }
+
+    .chip { display: inline-block; padding: 2px 8px; background: var(--bg-inset); border-radius: 4px; font-size: 11px; margin: 2px 3px 0 0; color: var(--text-secondary); }
+
+    .attach-v {
+      display: inline-block; margin-top: 3px; font-size: 10px;
+      padding: 2px 8px; border-radius: var(--r-pill); letter-spacing: 0.02em;
+    }
+    .attach-v.ok  { background: var(--ok-soft);     color: var(--ok); }
+    .attach-v.bad { background: var(--danger-soft); color: var(--danger); cursor: help; }
+
+    .override-actions {
+      display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;
+    }
+    .override-actions .btn { padding: 4px 10px; font-size: 11px; }
+  </style>
+</head>
+<body>
+
+<div class="page">
+<div id="nav-holder"></div>
+
+<div class="detail-container">
+  <div class="crumb animate-fade">
+    <a href="/manager/queue">Review queue</a> &nbsp;→&nbsp;
+    <span id="crumb-id" class="mono">—</span>
+  </div>
+
+  <div id="verdict-hero-container" class="animate-slide-up"></div>
+
+  <div class="layout">
+    <main>
+      <div class="card animate-slide-up">
+        <h2 class="card-title">Receipt & extracted fields</h2>
+        <p class="card-subtitle">Original upload (left) + Gemini OCR output (right).</p>
+        <div class="ocr-grid">
+          <div class="receipt-box">
+            <img id="img" alt="receipt"/>
+            <div class="text-xs text-muted">Original upload</div>
+          </div>
+          <div class="fields" id="fields"></div>
+        </div>
+      </div>
+
+      <div class="card animate-slide-up" style="margin-top: 14px">
+        <h2 class="card-title">Policy violations</h2>
+        <p class="card-subtitle">Rules fired by the Drools policy engine.</p>
+        <div id="rule-hits"></div>
+      </div>
+
+      <div class="card animate-slide-up" style="margin-top: 14px">
+        <h2 class="card-title">Anomaly detection</h2>
+        <p class="card-subtitle">Isolation Forest + Autoencoder scores (0 = normal, 1 = anomalous).</p>
+        <div id="anomaly-panel"></div>
+        <div style="margin-top: 12px" id="top-features"></div>
+      </div>
+
+      <div class="card animate-slide-up" style="margin-top: 14px">
+        <h2 class="card-title">Engineered features</h2>
+        <p class="card-subtitle">The 14-dim numeric vector the ML models reasoned about.</p>
+        <div class="fields" id="feat-fields"></div>
+      </div>
+    </main>
+
+    <aside>
+      <div class="card animate-slide-up">
+        <h3 style="font-size: 13px; color: var(--text-secondary); margin-bottom: 10px">Metadata</h3>
+        <div id="meta"></div>
+      </div>
+
+      <div class="card animate-slide-up action-panel" id="action-panel" style="margin-top: 14px; display:none">
+        <h3 style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px">Manager action</h3>
+        <textarea class="textarea comment-ta" id="comment" placeholder="Add an optional comment..."></textarea>
+        <button class="btn btn-ok" id="approve-btn">✓ Approve</button>
+        <button class="btn btn-danger" id="reject-btn">✗ Reject</button>
+      </div>
+
+      <div class="card animate-slide-up" style="margin-top: 14px">
+        <h3 style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px">Audit trail</h3>
+        <div id="audit"></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+</div>
+
+<script src="/static/css/app.js"></script>
+<script>
+const USER = App.requireRole('employee','manager','admin');
+App.mountNav('queue');
+
+const claimId = location.pathname.split('/').pop();
+document.getElementById('crumb-id').textContent = claimId;
+
+async function boot() {
+  const d = await App.api('/api/claims/' + claimId);
+  renderHero(d.verdict, d.claim);
+  renderFieldsAndImage(d);
+  renderRuleHits(d.policy_json);
+  renderAnomaly(d.anomaly_json, d.verdict);
+  renderFeatures(d.engineered_features);
+  renderMeta(d);
+  renderAudit(d.audit);
+  // Only managers/admins see the action panel AND only if pending
+  const canReview = ['manager','admin'].includes(USER.role) && !d.verdict?.reviewed_at;
+  const needsReview = d.verdict && ['SUSPICIOUS','FRAUDULENT'].includes(d.verdict.final_status);
+  if (canReview && needsReview) {
+    document.getElementById('action-panel').style.display = '';
+  }
+}
+
+function renderHero(v, c) {
+  const el = document.getElementById('verdict-hero-container');
+  const s = (v?.final_status || 'VALID').toLowerCase();
+  el.innerHTML = `
+    <div class="verdict-hero ${s}">
+      <div>
+        <div class="verdict-label">Final verdict</div>
+        <div class="verdict-big">${v?.final_status || '—'}</div>
+        <div class="verdict-sub">${v?.action || '—'} · Policy ${v?.policy_status || '—'} (score ${v?.policy_score ?? '—'}/100)</div>
+      </div>
+      <div class="verdict-score">
+        <div class="num">${(v?.final_score ?? 0).toFixed(2)}</div>
+        <div class="verdict-label">fraud score</div>
+      </div>
+    </div>`;
+}
+
+function renderFieldsAndImage(d) {
+  const img = document.getElementById('img');
+  img.src = d.original_png_base64
+    ? `data:image/png;base64,${d.original_png_base64}`
+    : '';
+  if (!d.original_png_base64) {
+    document.querySelector('.receipt-box').innerHTML =
+      '<div class="text-muted text-sm" style="padding:40px 20px">No image on file (seeded claim)</div>';
+  }
+
+  const o = d.ocr_json || {};
+  const c = d.claim;
+  const fields = [
+    ['Vendor',   c.vendor],
+    ['Amount',   App.money(c.amount, (o.currency || 'INR') === 'INR' ? '₹' : (o.currency + ' '))],
+    ['Category', c.category],
+    ['Date',     App.date(o.date || c.submitted_at)],
+    ['Confidence', o.confidence != null ? (o.confidence*100).toFixed(0) + '%' : '—'],
+    ['Employee', `${c.employee_id} · ${c.department} · ${c.grade}`],
+  ];
+  document.getElementById('fields').innerHTML = fields.map(([l,v]) =>
+    `<div class="field"><div class="fl">${l}</div><div class="fv">${App.escapeHtml(v || '—')}</div></div>`
+  ).join('');
+}
+
+function renderRuleHits(pol) {
+  const el = document.getElementById('rule-hits');
+  const hits = pol?.rule_hits || [];
+  if (!hits.length) {
+    el.innerHTML = `<div class="text-muted" style="padding: 20px; text-align: center; background: var(--ok-soft); border-radius: 8px; color: var(--ok)">
+      ✓ No policy rules fired — this claim is fully compliant.
+    </div>`;
+    return;
+  }
+  el.innerHTML = hits.map(h => `
+    <div class="rule-hit">
+      <div class="r-icon ${h.severity}">${h.severity.charAt(0)}</div>
+      <div class="r-id">${h.rule_id}</div>
+      <div class="r-body">
+        <div class="reason">${App.escapeHtml(h.reason)}</div>
+        <div class="name">Severity: ${h.severity} · deduction −${h.deduction}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderAnomaly(an, v) {
+  const el = document.getElementById('anomaly-panel');
+  const rows = [
+    ['Isolation Forest', an?.isolation_forest?.anomaly_score],
+    ['Autoencoder',      an?.autoencoder?.anomaly_score],
+    ['Combined',         an?.combined_anomaly_score ?? v?.ml_combined_score],
+  ];
+  el.innerHTML = rows.map(([n, s]) => {
+    const pct = (s || 0) * 100;
+    return `<div class="anomaly-row">
+      <div class="anomaly-name">${n}</div>
+      <div class="anomaly-bar"><div class="anomaly-fill" style="width:${pct.toFixed(1)}%"></div></div>
+      <div class="anomaly-val">${(s || 0).toFixed(3)}</div>
+    </div>`;
+  }).join('');
+
+  const top = an?.top_features || [];
+  if (top.length) {
+    document.getElementById('top-features').innerHTML =
+      '<div class="text-xs text-muted" style="margin-bottom: 6px">Top contributing features:</div>' +
+      top.map(f => `<span class="chip">${App.escapeHtml(f.name)} · ${(f.residual || 0).toFixed(2)}σ</span>`).join('');
+  }
+}
+
+function renderFeatures(f) {
+  const rows = Object.entries(f || {})
+    .filter(([k]) => !['claim_id','employee_id','department','grade','vendor','category'].includes(k))
+    .slice(0, 12);
+  document.getElementById('feat-fields').innerHTML = rows.map(([k,v]) =>
+    `<div class="field"><div class="fl">${k}</div><div class="fv mono" style="font-size:12px">${typeof v === 'number' ? v.toFixed(3) : App.escapeHtml(String(v))}</div></div>`
+  ).join('');
+}
+
+function renderMeta(d) {
+  const c = d.claim, v = d.verdict, f = d.flags || {};
+  const att = d.attachments || {};
+  const canReview = ['manager','admin'].includes(USER.role);
+  const mkAttachLabel = (kind, flag) => {
+    const a = att[kind];
+    if (a) {
+      const name = App.escapeHtml(a.name || kind);
+      const link = `<a href="/api/claims/${c.id}/attachment/${kind}" target="_blank" style="color:var(--accent)">${name}</a>`;
+      const v = a.validation;
+      if (!v || v.service !== 'gemini' || v.appears_valid === null) {
+        return `✓ ${link}`;
+      }
+      if (v.manually_overridden) {
+        const badge = v.appears_valid
+          ? `<span class="attach-v ok">✓ Manually approved by ${App.escapeHtml(v.override_by || '')}</span>`
+          : `<span class="attach-v bad">✗ Manually rejected by ${App.escapeHtml(v.override_by || '')}</span>`;
+        return `${v.appears_valid ? '✓ ' : ''}${link}<br/>${badge}`;
+      }
+      if (v.appears_valid) {
+        const conf = Math.round((v.confidence || 0) * 100);
+        return `✓ ${link}<br/><span class="attach-v ok">AI-verified · ${conf}% confident</span>`;
+      }
+      // Flagged by Gemini. Offer override controls to reviewers.
+      const override = canReview
+        ? `<div class="override-actions">
+             <button class="btn btn-secondary btn-sm" onclick="window.open('/api/claims/${c.id}/attachment/${kind}', '_blank')">👁 View file</button>
+             <button class="btn btn-ok btn-sm" onclick="overrideAttachment('${kind}', true)">✓ Mark as valid</button>
+             <button class="btn btn-danger btn-sm" onclick="overrideAttachment('${kind}', false)">✗ Confirm invalid</button>
+           </div>`
+        : '';
+      return `<s style="opacity:0.7">${link}</s>
+              <br/><span class="attach-v bad" title="${App.escapeHtml(v.reason || '')}">⚠ Flagged: ${App.escapeHtml(v.document_type || 'not a valid document')}</span>
+              ${override}`;
+    }
+    return flag ? '⚠ Ticked but no file' : '—';
+  };
+  const rows = [
+    ['Claim ID', c.id],
+    ['Company', c.company_id],
+    ['Department', c.department],
+    ['Grade', c.grade],
+    ['Submitted', App.datetime(c.submitted_at)],
+    ['Receipt', f.receipt_attached ? '✓ Attached' : '✗ Missing'],
+    ['Pre-approval', mkAttachLabel('pre_approval', f.pre_approval_attached)],
+    ['Attendee list', mkAttachLabel('attendee_list', f.attendee_list_attached)],
+    ['Business trip', f.is_business_trip ? '✓' : '—'],
+    ['Per diem', f.is_per_diem ? '✓' : '—'],
+    ['Team meal', f.is_team_meal ? '✓' : '—'],
+    ['Reviewed', v?.reviewed_at ? App.datetime(v.reviewed_at) : 'Not yet'],
+  ];
+  document.getElementById('meta').innerHTML = rows.map(([k, val]) =>
+    `<div class="meta-row"><div class="meta-k">${k}</div><div class="meta-v">${val}</div></div>`
+  ).join('');
+}
+
+function renderAudit(items) {
+  document.getElementById('audit').innerHTML = (items || []).map(a => {
+    const cls = a.event === 'APPROVED' ? 'ok' : a.event === 'REJECTED' ? 'bad' : '';
+    return `<div class="audit-item">
+      <div class="audit-dot ${cls}"></div>
+      <div class="audit-body">
+        <p><strong>${a.event}</strong> by ${App.escapeHtml(a.actor)}</p>
+        <span>${App.datetime(a.created_at)}</span>
+        ${a.detail ? `<p class="text-xs text-muted" style="margin-top:2px">${App.escapeHtml(a.detail)}</p>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function overrideAttachment(kind, isValid) {
+  const label = kind === 'pre_approval' ? 'pre-approval' : 'attendee list';
+  const verb  = isValid ? 'approve' : 'reject';
+  const comment = prompt(`Add an optional comment for this ${verb} action on the ${label}:`) ?? '';
+  if (comment === null) return;  // user cancelled
+  try {
+    await App.api(`/api/claims/${claimId}/attachments/${kind}/override`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_valid: isValid, comment }),
+    });
+    App.toast(isValid
+      ? `${label} marked as valid — flag flipped to attached.`
+      : `${label} confirmed invalid.`, isValid ? 'ok' : 'warn');
+    setTimeout(() => location.reload(), 600);
+  } catch (e) { App.toast('Override failed: ' + e.message, 'danger'); }
+}
+
+async function review(action) {
+  const comment = document.getElementById('comment').value.trim();
+  try {
+    await App.api(`/api/claims/${claimId}/review`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ action, comment }),
+    });
+    App.toast(action === 'APPROVE' ? 'Claim approved ✓' : 'Claim rejected', action === 'APPROVE' ? 'ok' : 'danger');
+    setTimeout(() => location.reload(), 800);
+  } catch (e) { App.toast('Failed: ' + e.message, 'danger'); }
+}
+document.getElementById('approve-btn').addEventListener('click', () => review('APPROVE'));
+document.getElementById('reject-btn').addEventListener('click', () => review('REJECT'));
+
+boot().catch(e => App.toast('Error: ' + e.message, 'danger'));
+</script>
+</body>
+</html>

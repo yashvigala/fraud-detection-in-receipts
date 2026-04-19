@@ -1,0 +1,829 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Company settings — ExpenseAI</title>
+  <link rel="stylesheet" href="/static/css/theme.css"/>
+  <style>
+    .rules-layout {
+      display: grid; grid-template-columns: 240px 1fr; gap: 24px;
+      max-width: 1200px; margin: 0 auto; padding: 24px;
+    }
+    .rule-tabs { display: flex; flex-direction: column; gap: 2px; }
+    .rule-tab {
+      padding: 10px 14px; border-radius: var(--r-md);
+      cursor: pointer; font-size: 13px; color: var(--text-secondary);
+      transition: all var(--dur-fast) var(--ease-out);
+    }
+    .rule-tab:hover { background: var(--bg-secondary); color: var(--text-primary); }
+    .rule-tab.active { background: var(--accent-soft); color: var(--accent-hover); font-weight: 500; }
+    .rule-tab-group { font-size: 11px; color: var(--text-tertiary); letter-spacing: 0.08em;
+                      text-transform: uppercase; padding: 12px 14px 6px; }
+
+    .rule-panel { animation: slideUp var(--dur-med) var(--ease-out); }
+    .limit-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .limit-field { padding: 14px; background: var(--bg-inset); border-radius: var(--r-md); }
+    .limit-field label { display: block; font-size: 11px; color: var(--text-tertiary); margin-bottom: 6px; letter-spacing: 0.05em; text-transform: uppercase; }
+    .limit-field input {
+      background: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--r-sm);
+      padding: 8px 10px;
+      font-family: var(--font-mono);
+      font-size: 14px; width: 100%;
+      color: var(--text-primary);
+    }
+    .limit-field input:focus { outline: none; border-color: var(--border-focus); box-shadow: var(--shadow-focus); }
+
+    .cat-row {
+      display: grid; grid-template-columns: 180px 1fr; gap: 16px;
+      padding: 14px 0; border-bottom: 1px solid var(--border-primary);
+      align-items: center;
+    }
+    .cat-row:last-child { border-bottom: none; }
+    .cat-name { font-weight: 500; font-size: 14px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip-dept {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: var(--r-pill);
+      background: var(--bg-card); border: 1px solid var(--border-primary);
+      font-size: 12px; color: var(--text-secondary); cursor: pointer;
+      transition: all var(--dur-fast) var(--ease-out);
+      user-select: none;
+    }
+    .chip-dept:hover { border-color: var(--border-secondary); }
+    .chip-dept input { display: none; }
+    .chip-dept:has(input:checked) {
+      background: var(--accent-soft); border-color: var(--accent);
+      color: var(--accent-hover); font-weight: 500;
+    }
+
+    .save-bar {
+      position: sticky; bottom: 16px; margin-top: 32px;
+      background: var(--bg-card); border: 1px solid var(--border-primary);
+      border-radius: var(--r-lg); padding: 14px 20px;
+      display: flex; justify-content: space-between; align-items: center;
+      box-shadow: var(--shadow-lg);
+    }
+    .save-status { font-size: 12px; color: var(--text-tertiary); }
+    .save-status.ok { color: var(--ok); }
+    .save-status.err { color: var(--danger); }
+
+    .pref {
+      display: grid; grid-template-columns: 1fr 120px; gap: 12px;
+      padding: 14px 0; border-bottom: 1px solid var(--border-primary); align-items: center;
+    }
+    .pref:last-child { border-bottom: none; }
+    .pref-name { font-size: 14px; font-weight: 500; }
+    .pref-desc { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+
+    .upload-tile {
+      border: 1.5px dashed var(--border-secondary);
+      border-radius: var(--r-lg);
+      padding: 22px; text-align: center;
+      transition: all var(--dur-med) var(--ease-out);
+      background: var(--bg-inset);
+    }
+    .upload-tile:hover {
+      border-color: var(--accent); background: var(--accent-soft);
+    }
+    .upload-tile .tile-icon {
+      font-size: 26px; margin-bottom: 8px;
+    }
+    .upload-tile .tile-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+    .upload-tile .tile-sub { font-size: 12px; color: var(--text-tertiary); margin-bottom: 12px; }
+
+    .crules-head {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 14px; border-top: 1px solid var(--border-primary);
+    }
+
+    .crule-row {
+      display: grid;
+      grid-template-columns: 60px 1fr auto auto;
+      gap: 12px; padding: 12px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--r-md);
+      margin-bottom: 8px;
+      align-items: center;
+      transition: all var(--dur-fast) var(--ease-out);
+      animation: slideUp var(--dur-med) var(--ease-out);
+    }
+    .crule-row:hover { border-color: var(--border-secondary); box-shadow: var(--shadow-sm); }
+    .crule-row.disabled { opacity: 0.55; }
+    .crule-row .sev-pill {
+      text-align: center; font-size: 10px; padding: 3px 10px;
+      border-radius: var(--r-pill); letter-spacing: 0.04em;
+      font-weight: 600;
+    }
+    .crule-row .sev-HARD { background: var(--danger-soft); color: var(--danger); }
+    .crule-row .sev-SOFT { background: var(--warn-soft);   color: var(--warn); }
+    .crule-row .name { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+    .crule-row .id-mono { font-family: var(--mono); font-size: 11px; color: var(--text-tertiary); }
+    .crule-row .msg { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+    .crule-row .when { font-family: var(--mono); font-size: 11px; color: var(--text-tertiary); margin-top: 4px; }
+    .crule-row button {
+      background: transparent; border: 1px solid var(--border-primary);
+      padding: 6px 10px; border-radius: var(--r-sm); cursor: pointer;
+      font-size: 11px; color: var(--text-secondary);
+    }
+    .crule-row button:hover { border-color: var(--border-secondary); color: var(--text-primary); }
+    .crule-row button.del:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(31,30,29,0.5);
+      display: grid; place-items: center; z-index: 100;
+      animation: fadeIn var(--dur-fast) var(--ease-out);
+    }
+    .modal {
+      background: var(--bg-card); border-radius: var(--r-lg);
+      padding: 24px; width: 100%; max-width: 640px;
+      max-height: 90vh; overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      animation: scaleIn var(--dur-med) var(--ease-out);
+    }
+    .modal h3 { font-family: var(--font-serif); font-size: 20px; margin-bottom: 4px; }
+    .modal .subhead { color: var(--text-tertiary); font-size: 13px; margin-bottom: 18px; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+    .preview-row {
+      display: grid; grid-template-columns: 60px 1fr auto;
+      gap: 10px; padding: 8px 10px;
+      background: var(--bg-inset); border-radius: var(--r-sm);
+      margin-bottom: 5px; font-size: 12px;
+      animation: slideUp var(--dur-med) var(--ease-out);
+    }
+    .preview-row input[type=checkbox] { margin: 0; accent-color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<div class="page">
+<div id="nav-holder"></div>
+
+<div class="rules-layout stagger">
+  <aside class="rule-tabs card" style="padding: 16px 8px; align-self: flex-start; position: sticky; top: 80px;">
+    <div class="rule-tab-group">Company</div>
+    <div style="padding: 0 6px 14px">
+      <select class="select" id="company-select" style="width: 100%"></select>
+    </div>
+
+    <div class="rule-tab-group">Rules</div>
+    <div class="rule-tab active" data-tab="grade">Grade limits</div>
+    <div class="rule-tab" data-tab="category">Category limits</div>
+    <div class="rule-tab" data-tab="restrictions">Category restrictions</div>
+    <div class="rule-tab" data-tab="advanced">Advanced thresholds</div>
+    <div class="rule-tab" data-tab="custom">
+      Custom rules
+      <span id="custom-count-badge" style="float:right; font-size:10px; background:var(--accent-soft); color:var(--accent-hover); padding:1px 7px; border-radius:10px">0</span>
+    </div>
+  </aside>
+
+  <main>
+    <div class="card animate-fade" id="tab-grade">
+      <h2 class="card-title">Grade daily spending limits</h2>
+      <p class="card-subtitle">Maximum ₹ an employee of each grade can claim per day. Claims above flag as HIGH policy breaches.</p>
+      <div class="limit-grid" id="grade-limits"></div>
+    </div>
+
+    <div class="card animate-fade rule-panel" id="tab-category" style="display:none">
+      <h2 class="card-title">Per-category claim limits</h2>
+      <p class="card-subtitle">Each expense category has its own per-claim cap. Flags as HIGH if over 2× the cap, MEDIUM otherwise.</p>
+      <div class="limit-grid" id="category-limits"></div>
+    </div>
+
+    <div class="card animate-fade rule-panel" id="tab-restrictions" style="display:none">
+      <h2 class="card-title">Category restrictions by department</h2>
+      <p class="card-subtitle">Only the selected departments may claim each category. Leave all unchecked to make a category unrestricted.</p>
+      <div id="restrictions"></div>
+    </div>
+
+    <div class="card animate-fade rule-panel" id="tab-advanced" style="display:none">
+      <h2 class="card-title">Advanced thresholds</h2>
+      <p class="card-subtitle">Round-number fraud trigger + ML anomaly cutoffs. Adjust cautiously.</p>
+      <div class="pref">
+        <div>
+          <div class="pref-name">Round-number amount trigger</div>
+          <div class="pref-desc">Claims above this ₹ amount that are multiples of 500 flag as MEDIUM (fabrication risk).</div>
+        </div>
+        <input type="number" step="100" id="round_threshold" class="input"/>
+      </div>
+      <div class="pref">
+        <div>
+          <div class="pref-name">SUSPICIOUS threshold</div>
+          <div class="pref-desc">ML combined score ≥ this flags as SUSPICIOUS. (0.0–1.0)</div>
+        </div>
+        <input type="number" step="0.01" min="0" max="1" id="sus_threshold" class="input"/>
+      </div>
+      <div class="pref">
+        <div>
+          <div class="pref-name">ANOMALOUS threshold</div>
+          <div class="pref-desc">ML combined score ≥ this flags as ANOMALOUS. Must be > SUSPICIOUS.</div>
+        </div>
+        <input type="number" step="0.01" min="0" max="1" id="anom_threshold" class="input"/>
+      </div>
+    </div>
+
+    <!-- ========== CUSTOM RULES TAB ========== -->
+    <div class="card animate-fade rule-panel" id="tab-custom" style="display:none">
+      <h2 class="card-title">Custom rules</h2>
+      <p class="card-subtitle">Company-specific rules authored as JSON, evaluated at submit time. Upload a PDF policy, paste JSON, or add rules manually.</p>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px">
+        <div class="upload-tile" id="upload-pdf">
+          <div class="tile-icon">📄</div>
+          <div class="tile-title">Upload policy PDF</div>
+          <div class="tile-sub">Gemini parses the policy into proposed rules for your review.</div>
+          <input type="file" id="pdf-input" accept="application/pdf" hidden/>
+          <button class="btn btn-secondary btn-sm tile-btn">Choose PDF</button>
+        </div>
+        <div class="upload-tile" id="upload-json">
+          <div class="tile-icon">{ }</div>
+          <div class="tile-title">Paste JSON rules</div>
+          <div class="tile-sub">An array of rules matching our schema — see example below.</div>
+          <button class="btn btn-secondary btn-sm tile-btn" onclick="openJsonModal()">Open editor</button>
+        </div>
+      </div>
+
+      <div class="crules-head">
+        <h3 style="font-family: var(--font-serif); font-size: 16px">All rules <span id="crules-count" class="text-muted" style="font-weight:400">(0)</span></h3>
+        <button class="btn btn-primary btn-sm" onclick="openRuleModal()">+ Add rule</button>
+      </div>
+
+      <div id="crules-list" style="margin-top: 12px"></div>
+    </div>
+
+    <div class="save-bar">
+      <div class="save-status" id="save-status">No unsaved changes</div>
+      <div style="display:flex; gap:8px">
+        <button class="btn btn-secondary" id="reset-btn">Reset</button>
+        <button class="btn btn-primary" id="save-btn">Save rules</button>
+      </div>
+    </div>
+  </main>
+</div>
+</div>
+
+<script src="/static/css/app.js"></script>
+<script>
+App.requireRole('admin');
+App.mountNav('onboarding');
+
+let GRADES = ['Junior','Mid','Senior','Director'];
+let CATEGORIES = [];
+let DEPARTMENTS = [];
+let CURRENT = null;
+let COMPANIES = [];
+let DIRTY = false;
+
+function markDirty() {
+  DIRTY = true;
+  const el = document.getElementById('save-status');
+  el.textContent = 'You have unsaved changes';
+  el.className = 'save-status err';
+}
+function markClean(msg) {
+  DIRTY = false;
+  const el = document.getElementById('save-status');
+  el.textContent = msg || 'No unsaved changes';
+  el.className = 'save-status ok';
+}
+
+async function boot() {
+  const cfg = await App.api('/api/config');
+  CATEGORIES = cfg.categories;
+  DEPARTMENTS = [...new Set(cfg.employees.map(e => e.department))].sort();
+  COMPANIES = cfg.companies;
+  const sel = document.getElementById('company-select');
+  sel.innerHTML = COMPANIES.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  sel.addEventListener('change', () => load(sel.value));
+  await load(COMPANIES[0].id);
+}
+
+async function load(id) {
+  CURRENT = await App.api('/api/companies/' + id);
+  render();
+  markClean('Loaded ' + CURRENT.name);
+}
+
+function render() {
+  // Grade
+  const gl = document.getElementById('grade-limits');
+  gl.innerHTML = GRADES.map(g => `
+    <div class="limit-field">
+      <label>${g}</label>
+      <input type="number" step="50" data-grade="${g}" value="${CURRENT.grade_daily_limit[g] ?? 0}"/>
+    </div>`).join('');
+
+  // Category
+  const cl = document.getElementById('category-limits');
+  cl.innerHTML = CATEGORIES.map(c => `
+    <div class="limit-field">
+      <label>${c}</label>
+      <input type="number" step="100" data-category="${c}" value="${CURRENT.category_daily_limit[c] ?? 0}"/>
+    </div>`).join('');
+
+  // Restrictions
+  const r = document.getElementById('restrictions');
+  r.innerHTML = CATEGORIES.map(c => {
+    const allowed = CURRENT.category_restrictions[c];
+    return `<div class="cat-row">
+      <div class="cat-name">${c}</div>
+      <div class="chips">${DEPARTMENTS.map(d => {
+        const checked = allowed && allowed.includes(d) ? 'checked' : '';
+        return `<label class="chip-dept"><input type="checkbox" data-cat="${c}" data-dept="${d}" ${checked}/>${d}</label>`;
+      }).join('')}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('round_threshold').value = CURRENT.round_number_threshold;
+  document.getElementById('sus_threshold').value   = CURRENT.suspicious_threshold;
+  document.getElementById('anom_threshold').value  = CURRENT.anomalous_threshold;
+
+  document.querySelectorAll('input').forEach(el => el.addEventListener('input', markDirty));
+}
+
+// Tab switcher
+document.querySelectorAll('.rule-tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.rule-tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    ['grade','category','restrictions','advanced','custom'].forEach(k => {
+      const el = document.getElementById('tab-' + k);
+      if (el) el.style.display = (k === t.dataset.tab) ? '' : 'none';
+    });
+  });
+});
+
+function collect() {
+  const grade_daily_limit = {};
+  document.querySelectorAll('[data-grade]').forEach(el => {
+    grade_daily_limit[el.dataset.grade] = Number(el.value);
+  });
+  const category_daily_limit = {};
+  document.querySelectorAll('[data-category]').forEach(el => {
+    category_daily_limit[el.dataset.category] = Number(el.value);
+  });
+  const category_restrictions = {};
+  document.querySelectorAll('#restrictions input[type=checkbox]').forEach(el => {
+    if (!el.checked) return;
+    const c = el.dataset.cat, d = el.dataset.dept;
+    (category_restrictions[c] = category_restrictions[c] || []).push(d);
+  });
+  return {
+    name: CURRENT.name, description: CURRENT.description,
+    grade_daily_limit, category_daily_limit, category_restrictions,
+    round_number_threshold: Number(document.getElementById('round_threshold').value),
+    suspicious_threshold:   Number(document.getElementById('sus_threshold').value),
+    anomalous_threshold:    Number(document.getElementById('anom_threshold').value),
+  };
+}
+
+document.getElementById('save-btn').addEventListener('click', async () => {
+  const payload = collect();
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...';
+  try {
+    CURRENT = await App.api('/api/companies/' + CURRENT.id, {
+      method: 'PUT', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload),
+    });
+    render();
+    markClean('Saved ' + new Date().toLocaleTimeString());
+    App.toast('Rules saved. New claims will use them immediately.', 'ok');
+  } catch (e) {
+    App.toast('Save failed: ' + e.message, 'danger');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save rules';
+  }
+});
+
+document.getElementById('reset-btn').addEventListener('click', () => load(CURRENT.id));
+
+// =========================================================================
+// CUSTOM RULES
+// =========================================================================
+
+function renderCustomRules() {
+  const rules = CURRENT.custom_rules || [];
+  document.getElementById('custom-count-badge').textContent = rules.length;
+  document.getElementById('crules-count').textContent = `(${rules.length})`;
+  const list = document.getElementById('crules-list');
+  if (!rules.length) {
+    list.innerHTML = `
+      <div style="padding: 32px; text-align: center; color: var(--text-tertiary); background: var(--bg-inset); border-radius: var(--r-md)">
+        No custom rules yet.<br/>
+        <span class="text-sm">Upload a policy PDF, paste JSON, or click <b>+ Add rule</b>.</span>
+      </div>`;
+    return;
+  }
+  list.innerHTML = rules.map(r => renderRuleRow(r)).join('');
+}
+
+function renderRuleRow(r) {
+  const enabled = r.enabled !== false;
+  const whenStr = Object.entries(r.when || {})
+    .map(([k,v]) => `${k}=${JSON.stringify(v)}`).join(' · ');
+  return `
+    <div class="crule-row ${enabled ? '' : 'disabled'}">
+      <span class="sev-pill sev-${r.severity}">${r.severity}</span>
+      <div>
+        <div class="name">${escapeHtml(r.name || '(unnamed)')}</div>
+        <div class="id-mono">${escapeHtml(r.id)} · deduction −${r.deduction ?? (r.severity === 'HARD' ? 100 : 30)}</div>
+        <div class="msg">${escapeHtml(r.message || '')}</div>
+        <div class="when">when: ${escapeHtml(whenStr)}</div>
+      </div>
+      <button onclick="toggleRule('${r.id}')" title="${enabled ? 'Disable' : 'Enable'}">
+        ${enabled ? '✓ Enabled' : '○ Disabled'}
+      </button>
+      <button class="del" onclick="deleteRule('${r.id}')" title="Delete rule">− Delete</button>
+    </div>`;
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+async function deleteRule(id) {
+  if (!confirm(`Delete rule "${id}"? This can't be undone.`)) return;
+  try {
+    const res = await App.api(`/api/companies/${CURRENT.id}/custom-rules/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    CURRENT.custom_rules = res.custom_rules;
+    renderCustomRules();
+    App.toast(`Rule "${id}" deleted`, 'ok');
+  } catch (e) { App.toast('Failed: ' + e.message, 'danger'); }
+}
+
+async function toggleRule(id) {
+  try {
+    const res = await App.api(`/api/companies/${CURRENT.id}/custom-rules/${encodeURIComponent(id)}/toggle`, { method: 'POST' });
+    CURRENT.custom_rules = res.custom_rules;
+    renderCustomRules();
+  } catch (e) { App.toast('Failed: ' + e.message, 'danger'); }
+}
+
+// ----- Add rule modal -----
+function openRuleModal(existing) {
+  const isEdit = !!existing;
+  const body = `
+    <div class="modal-overlay" id="modal-overlay" onclick="if(event.target.id==='modal-overlay')closeModal()">
+      <div class="modal">
+        <h3>${isEdit ? 'Edit' : 'Add'} custom rule</h3>
+        <p class="subhead">Rules fire during every claim submission. HARD = auto-reject. SOFT = flag for review.</p>
+
+        <div class="form-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px">
+          <div class="input-group">
+            <label class="field-label">ID</label>
+            <input class="input" id="m-id" value="${existing?.id || ''}" ${isEdit ? 'readonly' : ''} placeholder="e.g. CUSTOM_R01"/>
+          </div>
+          <div class="input-group">
+            <label class="field-label">Severity</label>
+            <select class="select" id="m-severity">
+              <option value="HARD" ${existing?.severity === 'HARD' ? 'selected' : ''}>HARD — auto-reject</option>
+              <option value="SOFT" ${existing?.severity === 'SOFT' || !existing ? 'selected' : ''}>SOFT — flag for review</option>
+            </select>
+          </div>
+          <div class="input-group" style="grid-column: 1/-1">
+            <label class="field-label">Name</label>
+            <input class="input" id="m-name" value="${escapeHtml(existing?.name || '')}" placeholder="e.g. No lodging above ₹8,000"/>
+          </div>
+          <div class="input-group" style="grid-column: 1/-1">
+            <label class="field-label">Message shown to employee (supports {amount}, {vendor}, {category})</label>
+            <input class="input" id="m-message" value="${escapeHtml(existing?.message || '')}" placeholder="Claim rejected: {category} above company cap"/>
+          </div>
+          <div class="input-group" style="grid-column: 1/-1">
+            <label class="field-label">Conditions (when) — JSON object</label>
+            <textarea class="textarea" id="m-when" rows="5" style="font-family:var(--mono); font-size:12px">${escapeHtml(JSON.stringify(existing?.when || {"category":"Lodging","amount_gt":8000}, null, 2))}</textarea>
+            <p class="text-xs text-muted mt-sm">
+              Supported keys: <code>category</code>, <code>department</code>, <code>grade</code>,
+              <code>amount_gt/lt/gte/lte</code>, <code>amount_is_round_multiple_of</code>,
+              <code>vendor_contains</code>, <code>is_business_trip</code>, <code>is_per_diem</code>,
+              <code>is_international</code>, <code>pre_approval_attached</code>,
+              <code>hour_gt/lt</code>, <code>is_weekend</code>, <code>justification_missing</code>.
+            </p>
+          </div>
+        </div>
+
+        <div id="m-error" style="font-size:12px; color:var(--danger); margin-top:8px; min-height:16px"></div>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="saveRule(${isEdit})">${isEdit ? 'Save changes' : 'Add rule'}</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', body);
+}
+
+function closeModal() {
+  document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+}
+
+async function saveRule(isEdit) {
+  const err = document.getElementById('m-error');
+  err.textContent = '';
+  let when;
+  try { when = JSON.parse(document.getElementById('m-when').value); }
+  catch (e) { err.textContent = 'Invalid JSON in conditions: ' + e.message; return; }
+
+  const rule = {
+    id:       document.getElementById('m-id').value.trim().toUpperCase(),
+    name:     document.getElementById('m-name').value.trim(),
+    severity: document.getElementById('m-severity').value,
+    enabled:  true,
+    when,
+    message:  document.getElementById('m-message').value.trim(),
+  };
+  if (!rule.id)      { err.textContent = 'ID is required'; return; }
+  if (!rule.message) { err.textContent = 'Message is required'; return; }
+
+  try {
+    const res = await App.api(`/api/companies/${CURRENT.id}/custom-rules`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rule }),
+    });
+    CURRENT.custom_rules = res.custom_rules;
+    renderCustomRules();
+    closeModal();
+    App.toast(`Rule "${rule.id}" saved`, 'ok');
+  } catch (e) { err.textContent = e.message; }
+}
+
+// ----- JSON paste modal -----
+function openJsonModal() {
+  const example = [
+    {
+      "id": "LODGING_CAP_6K",
+      "name": "Lodging above ₹6,000",
+      "severity": "HARD",
+      "enabled": true,
+      "when": { "category": "Lodging", "amount_gt": 6000 },
+      "deduction": 100,
+      "message": "Hotel claim of {amount} exceeds the ₹6,000/night cap."
+    },
+    {
+      "id": "FOOD_PER_CLAIM",
+      "name": "Meal over ₹1000",
+      "severity": "SOFT",
+      "when": { "category": "Food", "amount_gt": 1000 },
+      "message": "Meal claim {amount} exceeds the ₹1,000 per-meal guideline."
+    }
+  ];
+  document.body.insertAdjacentHTML('beforeend', `
+    <div class="modal-overlay" id="modal-overlay" onclick="if(event.target.id==='modal-overlay')closeModal()">
+      <div class="modal" style="max-width: 720px">
+        <h3>Paste JSON rules</h3>
+        <p class="subhead">Paste an array of rules. We'll validate them and show a preview before saving.</p>
+        <textarea class="textarea" id="json-box" rows="14" style="font-family:var(--mono); font-size:12px">${escapeHtml(JSON.stringify(example, null, 2))}</textarea>
+        <div id="json-error" style="font-size:12px; color:var(--danger); margin-top:8px"></div>
+        <div id="json-preview" style="margin-top:10px"></div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-secondary" onclick="previewJson()">Validate + preview</button>
+          <button class="btn btn-primary" id="json-save-btn" style="display:none" onclick="saveJsonRules()">Save these rules</button>
+        </div>
+      </div>
+    </div>`);
+}
+
+let _JSON_PENDING = null;
+async function previewJson() {
+  _JSON_PENDING = null;
+  document.getElementById('json-save-btn').style.display = 'none';
+  const err = document.getElementById('json-error');
+  const prev = document.getElementById('json-preview');
+  err.textContent = ''; prev.innerHTML = '';
+  const text = document.getElementById('json-box').value;
+  try {
+    const res = await App.api(`/api/companies/${CURRENT.id}/custom-rules/import-json`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    renderPreview(res.proposed_rules, res.warnings);
+    _JSON_PENDING = res.proposed_rules;
+    if (res.proposed_rules.length) document.getElementById('json-save-btn').style.display = '';
+  } catch (e) { err.textContent = e.message; }
+}
+
+async function saveJsonRules() {
+  if (!_JSON_PENDING || !_JSON_PENDING.length) return;
+  const btn = document.getElementById('json-save-btn');
+  btn.disabled = true;
+  const origText = btn.textContent;
+  btn.innerHTML = '<span class="spinner"></span> Saving...';
+  const saved = [];
+  try {
+    for (const rule of _JSON_PENDING) {
+      await App.api(`/api/companies/${CURRENT.id}/custom-rules`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rule }),
+      });
+      saved.push(rule.id);
+    }
+    const fresh = await App.api(`/api/companies/${CURRENT.id}/custom-rules`);
+    CURRENT.custom_rules = fresh.custom_rules;
+    renderCustomRules();
+    closeModal();
+    App.toast(`Saved ${saved.length} rule(s): ${saved.join(', ')}`, 'ok');
+    _JSON_PENDING = null;
+  } catch (e) {
+    App.toast(`Saved ${saved.length} of ${_JSON_PENDING.length}. Failed: ${e.message}`, 'danger');
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+}
+
+function renderPreview(rules, warnings) {
+  const el = document.getElementById('json-preview');
+  if (!rules.length) {
+    el.innerHTML = `<div class="text-muted text-sm" style="padding: 10px 0">No rules extracted.</div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="text-xs text-muted" style="margin: 10px 0 4px">
+      ${rules.length} rule${rules.length === 1 ? '' : 's'} ready to import
+      ${warnings && warnings.length ? ` · ${warnings.length} warning(s): ${escapeHtml(warnings.join(' · '))}` : ''}
+    </div>
+    ${rules.map(r => `
+      <div class="preview-row">
+        <span class="sev-pill sev-${r.severity}" style="text-align:center; font-size:10px; padding:3px 10px; border-radius:20px">${r.severity}</span>
+        <div>
+          <div style="font-weight:500; font-size:12px">${escapeHtml(r.name)}</div>
+          <div style="font-size:11px; color:var(--text-tertiary)">${escapeHtml(r.id)} · ${escapeHtml(r.message)}</div>
+        </div>
+      </div>`).join('')}
+  `;
+}
+
+// ----- PDF upload -----
+document.getElementById('pdf-input').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  openPdfPreviewModal(file);
+  // Reset so re-picking the same file after a failure re-triggers change.
+  e.target.value = '';
+});
+document.querySelector('#upload-pdf .tile-btn').addEventListener('click', () => {
+  document.getElementById('pdf-input').click();
+});
+
+let _PDF_PENDING = null;
+
+function openPdfPreviewModal(file) {
+  document.body.insertAdjacentHTML('beforeend', `
+    <div class="modal-overlay" id="modal-overlay" onclick="if(event.target.id==='modal-overlay')closeModal()">
+      <div class="modal" style="max-width: 720px">
+        <h3>Parsing policy PDF</h3>
+        <p class="subhead">Gemini is reading <b>${escapeHtml(file.name)}</b>
+          <span class="text-muted">(${(file.size/1024).toFixed(1)} KB)</span></p>
+
+        <div id="pdf-status" style="padding: 18px; background: var(--accent-soft); border-radius: var(--r-md); margin-bottom: 14px; display: flex; align-items: center; gap: 12px;">
+          <div class="spinner"></div>
+          <div>
+            <div style="font-size: 13px; font-weight: 500">Analysing document…</div>
+            <div class="text-xs text-muted">This can take 10 to 30 seconds for long policies.</div>
+          </div>
+        </div>
+
+        <div id="pdf-preview"></div>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" id="pdf-save-btn" style="display:none" onclick="savePdfRules()">Save all rules</button>
+        </div>
+      </div>
+    </div>`);
+  doPdfUpload(file);
+}
+
+async function doPdfUpload(file) {
+  _PDF_PENDING = null;
+  const fd = new FormData();
+  fd.append('file', file);
+
+  let resp, body;
+  try {
+    resp = await fetch(`/api/companies/${CURRENT.id}/custom-rules/import-pdf`, {
+      method: 'POST', body: fd, credentials: 'include',
+    });
+    body = await resp.json().catch(() => ({}));
+  } catch (e) {
+    return showPdfError('Network error: ' + e.message);
+  }
+
+  if (!resp.ok) {
+    return showPdfError(body.detail || body.error || ('HTTP ' + resp.status));
+  }
+
+  const rules = body.proposed_rules || [];
+  const warnings = body.warnings || [];
+
+  if (!rules.length) {
+    return showPdfError(
+      "Gemini couldn't extract any rules from this PDF. " +
+      "Try a document with clearer, more explicit policy wording.",
+    );
+  }
+
+  _PDF_PENDING = rules;
+  showPdfSuccess(rules, warnings);
+}
+
+function showPdfError(msg) {
+  const s = document.getElementById('pdf-status');
+  if (!s) return;
+  s.style.background = 'var(--danger-soft)';
+  s.innerHTML = `
+    <div style="font-size: 20px">⚠️</div>
+    <div>
+      <div style="font-size: 13px; font-weight: 500; color: var(--danger)">Couldn't parse the PDF</div>
+      <div class="text-xs" style="color: var(--danger); opacity: 0.9">${escapeHtml(msg)}</div>
+    </div>`;
+}
+
+function showPdfSuccess(rules, warnings) {
+  const s = document.getElementById('pdf-status');
+  if (!s) return;
+  s.style.background = 'var(--ok-soft)';
+  s.innerHTML = `
+    <div style="font-size: 22px">✓</div>
+    <div>
+      <div style="font-size: 13px; font-weight: 500; color: var(--ok)">
+        Extracted ${rules.length} rule${rules.length === 1 ? '' : 's'} from the PDF
+      </div>
+      <div class="text-xs text-muted">
+        Review them below, then click <b>Save all rules</b> to commit.
+        ${warnings.length ? '&nbsp;·&nbsp; ' + warnings.length + ' warning(s).' : ''}
+      </div>
+    </div>`;
+
+  const prev = document.getElementById('pdf-preview');
+  prev.innerHTML = `
+    <h4 style="font-size: 13px; font-weight: 500; color: var(--text-secondary); margin: 6px 0 10px; letter-spacing: 0.02em;">
+      PROPOSED RULES
+    </h4>
+    <div style="max-height: 360px; overflow-y: auto; border: 1px solid var(--border-primary); border-radius: var(--r-md); padding: 8px;">
+      ${rules.map(rulePreviewCard).join('')}
+    </div>`;
+
+  document.getElementById('pdf-save-btn').style.display = '';
+  document.getElementById('pdf-save-btn').textContent = `Save all ${rules.length} rule(s)`;
+}
+
+function rulePreviewCard(r) {
+  const sevColor = r.severity === 'HARD'
+    ? 'background:var(--danger-soft);color:var(--danger)'
+    : 'background:var(--warn-soft);color:var(--warn)';
+  const when = Object.entries(r.when || {})
+    .map(([k,v]) => `<code style="background:var(--bg-inset);padding:1px 5px;border-radius:3px;color:var(--text-secondary)">${escapeHtml(k)}: ${escapeHtml(JSON.stringify(v))}</code>`)
+    .join(' · ');
+  return `
+    <div style="padding: 12px 14px; border-bottom: 1px solid var(--border-primary);">
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+        <span style="font-size: 10px; padding: 3px 10px; border-radius: 20px; font-weight: 600; letter-spacing: 0.04em; ${sevColor}">${r.severity}</span>
+        <span style="font-family: var(--mono); font-size: 11px; color: var(--text-tertiary);">${escapeHtml(r.id)}</span>
+        <span style="font-size: 11px; color: var(--text-tertiary); margin-left: auto;">−${r.deduction ?? (r.severity === 'HARD' ? 100 : 30)} pts</span>
+      </div>
+      <div style="font-size: 13px; font-weight: 500; margin-bottom: 3px;">${escapeHtml(r.name)}</div>
+      <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; line-height: 1.5;">${escapeHtml(r.message)}</div>
+      <div style="font-size: 11px; line-height: 1.8;">${when}</div>
+    </div>`;
+}
+
+async function savePdfRules() {
+  if (!_PDF_PENDING) return;
+  const btn = document.getElementById('pdf-save-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...';
+  try {
+    for (const rule of _PDF_PENDING) {
+      await App.api(`/api/companies/${CURRENT.id}/custom-rules`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rule }),
+      });
+    }
+    const fresh = await App.api(`/api/companies/${CURRENT.id}/custom-rules`);
+    CURRENT.custom_rules = fresh.custom_rules;
+    renderCustomRules();
+    closeModal();
+    App.toast(`Imported ${_PDF_PENDING.length} rule(s) from PDF`, 'ok');
+    _PDF_PENDING = null;
+  } catch (e) {
+    App.toast('Save failed: ' + e.message, 'danger');
+    btn.disabled = false; btn.textContent = 'Save all rules';
+  }
+}
+
+// Render the custom rules list whenever a company is loaded.
+const _origRender = render;
+render = function() { _origRender(); renderCustomRules(); };
+
+boot();
+</script>
+
+</body>
+</html>

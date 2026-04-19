@@ -1,0 +1,27 @@
+# Image preprocessing
+opencv-python==4.10.0.84
+numpy==1.26.4
+Pillow==10.4.0
+
+# Data preprocessing & feature engineering
+pandas==2.2.3
+scikit-learn==1.5.2
+imbalanced-learn==0.12.4
+scipy==1.13.1
+
+# Synthetic data generation
+Faker==30.3.0
+
+# Utilities
+tqdm==4.66.5
+python-dateutil==2.9.0
+joblib==1.4.2
+
+# Backend + OCR + demo UI
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+python-multipart==0.0.12
+google-generativeai==0.8.3
+python-dotenv==1.0.1
+jinja2==3.1.4
+twilio==9.3.6

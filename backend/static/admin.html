@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin · Company Rules</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <link rel="stylesheet" href="/static/admin.css" />
+</head>
+<body>
+  <header>
+    <h1>Admin — Company Rule Management</h1>
+    <p class="subtitle">
+      <a href="/" style="color: var(--accent-2); text-decoration: none">← back to dashboard</a>
+      &nbsp;·&nbsp; Each company defines its own policy. Employees see the rules of whichever company they belong to.
+    </p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2><span class="step">1</span> Choose company</h2>
+      <div class="row two-col">
+        <div class="field">
+          <label for="company_select">Company</label>
+          <select id="company_select"></select>
+        </div>
+        <div class="field">
+          <label>Description</label>
+          <input id="company_desc" type="text" readonly />
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2><span class="step">2</span> Grade daily spending limits</h2>
+      <p class="hint">The maximum ₹ amount an employee of each grade can claim per day. Claims above this automatically flag as HIGH-severity policy breaches.</p>
+      <div class="grid4" id="grade-limits"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="step">3</span> Per-category claim limits</h2>
+      <p class="hint">Each expense category has its own per-claim cap, so a Junior who is allowed ₹1,500/day doesn't spend it all on entertainment. Claims above a category's limit flag accordingly.</p>
+      <div class="grid4" id="category-limits"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="step">4</span> Category restrictions (by department)</h2>
+      <p class="hint">Only checked departments can claim the given category. Unchecked everything = open to all departments.</p>
+      <div id="category-restrictions"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="step">5</span> Other thresholds</h2>
+      <div class="row two-col">
+        <div class="field">
+          <label for="round_threshold">Round-number flag threshold (₹)</label>
+          <input id="round_threshold" type="number" step="100" />
+          <p class="hint">Amounts at or above this that are multiples of 500 flag as MEDIUM (fabrication risk).</p>
+        </div>
+        <div class="field">
+          <label>ML anomaly cutoffs (0.0 – 1.0)</label>
+          <div style="display:flex; gap:10px;">
+            <input id="sus_threshold" type="number" step="0.01" min="0" max="1" style="flex:1" />
+            <input id="anom_threshold" type="number" step="0.01" min="0" max="1" style="flex:1" />
+          </div>
+          <p class="hint">Left: SUSPICIOUS cutoff. Right: ANOMALOUS cutoff. ANOM must be higher than SUS.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card sticky-actions">
+      <div class="row" style="display:flex; gap:12px; justify-content:flex-end; align-items:center; margin:0;">
+        <p class="status" id="status" style="margin:0; flex:1"></p>
+        <button id="reset-btn" type="button" class="secondary">Reset (reload from disk)</button>
+        <button id="save-btn" type="button">Save rules →</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/admin.js"></script>
+</body>
+</html>

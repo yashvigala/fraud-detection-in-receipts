@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Submit receipt — ExpenseAI</title>
+  <link rel="stylesheet" href="/static/css/theme.css"/>
+  <style>
+    .submit-container { max-width: 1200px; margin: 0 auto; padding: 28px 32px; }
+    .submit-head h1 { font-family: var(--font-serif); font-size: 30px; font-weight: 500; letter-spacing: -0.02em; margin-bottom: 6px; }
+    .submit-head p  { color: var(--text-tertiary); font-size: 14px; margin-bottom: 20px; }
+
+    .layout { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+    .upload-zone {
+      position: relative;
+      border: 2px dashed var(--border-secondary);
+      border-radius: var(--r-lg);
+      padding: 44px 24px; text-align: center;
+      cursor: pointer;
+      transition: all var(--dur-med) var(--ease-out);
+      background: var(--bg-inset);
+    }
+    .upload-zone:hover, .upload-zone.drag {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .upload-zone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+    .upload-icon {
+      width: 56px; height: 56px; border-radius: var(--r-md); margin: 0 auto 14px;
+      background: var(--accent-soft); color: var(--accent);
+      display: grid; place-items: center; font-size: 22px;
+    }
+    .upload-zone h4 { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+    .upload-zone p  { color: var(--text-tertiary); font-size: 13px; }
+    .upload-zone em { color: var(--accent); font-style: normal; font-weight: 500; }
+
+    .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .preview-box {
+      border: 1px solid var(--border-primary); border-radius: var(--r-md);
+      background: var(--bg-card); padding: 10px;
+    }
+    .preview-box h5 {
+      font-size: 10px; letter-spacing: 0.06em; color: var(--text-tertiary);
+      text-transform: uppercase; margin-bottom: 8px;
+    }
+    .preview-box img { width: 100%; max-height: 240px; object-fit: contain; border-radius: 4px; }
+
+    .ocr-out {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+      border: 1px solid var(--border-primary); border-radius: var(--r-md); overflow: hidden;
+    }
+    .ocr-field {
+      padding: 10px 14px; border-bottom: 1px solid var(--border-primary);
+      border-right: 1px solid var(--border-primary);
+    }
+    .ocr-field:nth-child(2n) { border-right: none; }
+    .ocr-field:nth-last-child(-n+2) { border-bottom: none; }
+    .ocr-label { font-size: 10px; color: var(--text-tertiary); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 2px; }
+    .ocr-value { font-size: 13px; font-weight: 500; }
+    .conf { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-left: 4px; }
+    .conf.high { background: var(--ok-soft); color: var(--ok); }
+    .conf.low  { background: var(--warn-soft); color: var(--warn); }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-grid .full { grid-column: 1/-1; }
+    .check-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+      padding: 8px 0;
+    }
+    .check {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px; background: var(--bg-inset);
+      border-radius: var(--r-md); cursor: pointer;
+      font-size: 13px; user-select: none;
+      transition: all var(--dur-fast) var(--ease-out);
+    }
+    .check:hover { background: var(--accent-soft); }
+    .check input { accent-color: var(--accent); margin: 0; cursor: pointer; }
+    .check input:disabled { cursor: not-allowed; }
+    .auto-tag { font-size: 10px; color: var(--text-tertiary); margin-left: 4px; }
+
+    .attach-drawer {
+      margin-top: 8px;
+      padding: 14px 16px;
+      background: var(--accent-soft);
+      border: 1px dashed var(--accent-muted);
+      border-radius: var(--r-md);
+      animation: slideDown var(--dur-med) var(--ease-out);
+    }
+    .attach-label {
+      font-size: 13px; font-weight: 500; margin-bottom: 8px;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .attach-hint {
+      font-size: 11px; font-weight: 400;
+      color: var(--text-tertiary);
+    }
+    .attach-drawer input[type=file] {
+      font-size: 12px; color: var(--text-secondary);
+      padding: 6px; width: 100%;
+      background: var(--bg-card); border-radius: var(--r-sm);
+      border: 1px solid var(--border-primary);
+    }
+    .attach-drawer.has-file {
+      background: var(--ok-soft);
+      border-color: var(--ok);
+      border-style: solid;
+    }
+    .attach-drawer.has-file .attach-label::after {
+      content: '✓ ready to send';
+      color: var(--ok); font-weight: 500; margin-left: 8px;
+    }
+
+    /* Pipeline status (right column) */
+    .pipeline-panel {
+      background: var(--bg-card); border: 1px solid var(--border-primary);
+      border-radius: var(--r-lg); padding: 20px;
+      position: sticky; top: 88px;
+    }
+    .pipeline-panel h3 {
+      font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;
+    }
+    .p-step {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0; border-bottom: 1px solid var(--border-primary);
+    }
+    .p-step:last-child { border-bottom: none; }
+    .p-dot {
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 1.5px solid var(--border-secondary);
+      display: grid; place-items: center; font-size: 11px; flex-shrink: 0;
+      color: var(--text-tertiary);
+      background: var(--bg-card);
+    }
+    .p-step.done .p-dot { background: var(--ok); border-color: var(--ok); color: white; }
+    .p-step.active .p-dot { background: var(--accent); border-color: var(--accent); color: white; animation: pulse 1.5s infinite; }
+    .p-body { flex: 1; }
+    .p-title { font-size: 13px; font-weight: 500; }
+    .p-sub   { font-size: 11px; color: var(--text-tertiary); }
+
+    .verdict-card {
+      margin-top: 14px;
+      border-radius: var(--r-lg);
+      padding: 20px; text-align: center;
+      border: 2px solid;
+    }
+    .verdict-card.VALID      { background: var(--ok-soft);     border-color: var(--ok); }
+    .verdict-card.SUSPICIOUS { background: var(--warn-soft);   border-color: var(--warn); }
+    .verdict-card.REJECTED   { background: var(--danger-soft); border-color: var(--danger); }
+    .verdict-card.FRAUDULENT { background: var(--danger-soft); border-color: var(--danger); }
+    .vc-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.7; margin-bottom: 4px; }
+    .vc-big { font-family: var(--font-serif); font-size: 26px; font-weight: 500; line-height: 1; }
+    .vc-score { margin-top: 8px; font-family: var(--mono); font-size: 12px; opacity: 0.8; }
+
+    .reason-list { margin-top: 14px; }
+    .reason {
+      display: flex; gap: 10px; padding: 10px 12px;
+      border-left: 3px solid var(--border-primary);
+      background: var(--bg-inset); border-radius: 0 6px 6px 0;
+      margin-bottom: 6px; font-size: 12px;
+    }
+    .reason.HIGH   { border-left-color: var(--danger); background: var(--danger-soft); }
+    .reason.MEDIUM { border-left-color: var(--warn);   background: var(--warn-soft); }
+    .reason.LOW    { border-left-color: var(--info);   background: var(--info-soft); }
+    .reason.INFO   { border-left-color: var(--ok);     background: var(--ok-soft); }
+
+    .submit-btn-row { display: flex; gap: 8px; margin-top: 16px; }
+    .submit-btn-row .btn { flex: 1; }
+  </style>
+</head>
+<body>
+
+<div class="page">
+<div id="nav-holder"></div>
+
+<div class="submit-container">
+  <div class="submit-head animate-fade">
+    <h1>Submit a receipt</h1>
+    <p>Upload an image. Gemini extracts the fields, Drools checks policy, our ML ensemble scores anomalies. You'll have a verdict in under 4 seconds.</p>
+  </div>
+
+  <div class="layout">
+    <div>
+      <div class="card animate-slide-up">
+        <div class="upload-zone" id="dropzone">
+          <div class="upload-icon">📄</div>
+          <h4>Drop your receipt here, or <em>click to browse</em></h4>
+          <p>JPG or PNG · up to 10 MB</p>
+          <input type="file" accept="image/*" id="file-input"/>
+        </div>
+
+        <div id="preview" style="display:none">
+          <div class="preview-grid">
+            <div class="preview-box">
+              <h5>Original</h5>
+              <img id="img-original" alt=""/>
+            </div>
+            <div class="preview-box">
+              <h5>After deskew · denoise · binarise</h5>
+              <img id="img-preprocessed" alt=""/>
+            </div>
+          </div>
+        </div>
+
+        <div id="ocr-panel" style="display:none; margin-top: 16px">
+          <h4 style="font-family: var(--font-serif); font-size: 15px; margin-bottom: 8px">Extracted fields (Gemini OCR)</h4>
+          <div class="ocr-out" id="ocr-out"></div>
+        </div>
+      </div>
+
+      <div class="card animate-slide-up" style="margin-top: 14px">
+        <h2 class="card-title">Claim details</h2>
+        <p class="card-subtitle">Override OCR values or add context the receipt doesn't show.</p>
+
+        <form id="form">
+          <div class="form-grid">
+            <div class="input-group">
+              <label class="field-label">Category override</label>
+              <select class="select" name="override_category">
+                <option value="">(use OCR-inferred)</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label class="field-label">Amount override (₹)</label>
+              <input class="input" type="number" step="0.01" name="override_amount" placeholder="leave blank to trust OCR"/>
+            </div>
+            <div class="input-group full">
+              <label class="field-label">Vendor override</label>
+              <input class="input" type="text" name="override_vendor" placeholder="leave blank to trust OCR"/>
+            </div>
+            <div class="input-group full">
+              <label class="field-label">Justification (required for amounts &gt; ₹2000)</label>
+              <textarea class="textarea" name="justification_text" rows="2" placeholder="Business meeting with client ABC..."></textarea>
+            </div>
+          </div>
+
+          <div style="margin-top: 14px">
+            <label class="field-label">Claim context (checked by Drools policy rules)</label>
+            <div class="check-grid">
+              <label class="check"><input type="checkbox" name="receipt_attached" checked disabled/> Receipt attached <span class="auto-tag">(auto)</span></label>
+              <label class="check"><input type="checkbox" name="pre_approval_attached" data-expand="pa-upload"/> Pre-approval attached</label>
+              <label class="check"><input type="checkbox" name="is_business_trip"/> On a business trip</label>
+              <label class="check"><input type="checkbox" name="is_per_diem"/> Per-diem claim</label>
+              <label class="check"><input type="checkbox" name="is_team_meal"/> Team meal</label>
+              <label class="check"><input type="checkbox" name="attendee_list_attached" data-expand="al-upload"/> Attendee list attached</label>
+            </div>
+
+            <!-- Conditional file inputs: shown only when the matching checkbox is ticked.
+                 If the user ticks the box without uploading, the server coerces the
+                 flag to false (we warn them via a toast). -->
+            <div class="attach-drawer" id="pa-upload" hidden>
+              <div class="attach-label">
+                📎 Upload pre-approval document
+                <span class="attach-hint">PDF, PNG, or JPG — required for the box above to count.</span>
+              </div>
+              <input type="file" name="pre_approval_file" accept="application/pdf,image/*"/>
+            </div>
+
+            <div class="attach-drawer" id="al-upload" hidden>
+              <div class="attach-label">
+                📎 Upload attendee list
+                <span class="attach-hint">PDF, image, or text with names of attendees — required for the box above to count.</span>
+              </div>
+              <input type="file" name="attendee_list_file" accept="application/pdf,image/*,text/plain"/>
+            </div>
+          </div>
+
+          <div style="margin-top: 14px">
+            <label class="field-label">Phone number for re-upload calls (optional, E.164)</label>
+            <input class="input" type="tel" name="phone_number" placeholder="+919876543210" pattern="\+[0-9]{7,15}"/>
+            <p class="text-xs text-muted mt-sm">If the image is corrupt or OCR confidence &lt; 40%, Twilio calls you.</p>
+          </div>
+
+          <div class="submit-btn-row">
+            <button type="submit" class="btn btn-primary btn-lg" id="submit-btn" disabled>
+              Submit claim →
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <aside>
+      <div class="pipeline-panel">
+        <h3>Pipeline status</h3>
+        <div class="p-step" id="p-upload">
+          <div class="p-dot">1</div>
+          <div class="p-body"><div class="p-title">Upload</div><div class="p-sub">Receipt image</div></div>
+        </div>
+        <div class="p-step" id="p-ocr">
+          <div class="p-dot">2</div>
+          <div class="p-body"><div class="p-title">OCR</div><div class="p-sub">Gemini Flash 2.5</div></div>
+        </div>
+        <div class="p-step" id="p-policy">
+          <div class="p-dot">3</div>
+          <div class="p-body"><div class="p-title">Policy</div><div class="p-sub">Drools rules</div></div>
+        </div>
+        <div class="p-step" id="p-ml">
+          <div class="p-dot">4</div>
+          <div class="p-body"><div class="p-title">Anomaly</div><div class="p-sub">IF + Autoencoder</div></div>
+        </div>
+        <div class="p-step" id="p-decision">
+          <div class="p-dot">5</div>
+          <div class="p-body"><div class="p-title">Decision</div><div class="p-sub">Final verdict</div></div>
+        </div>
+
+        <div id="verdict-holder"></div>
+
+        <div class="reason-list" id="reasons"></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+</div>
+
+<script src="/static/css/app.js"></script>
+<script>
+const USER = App.requireRole('employee');
+App.mountNav('submit');
+
+let CFG = null;
+async function boot() {
+  CFG = await App.api('/api/config');
+  const sel = document.querySelector('select[name=override_category]');
+  CFG.categories.forEach(c => {
+    const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o);
+  });
+}
+
+const fileInput = document.getElementById('file-input');
+const dropzone  = document.getElementById('dropzone');
+const submitBtn = document.getElementById('submit-btn');
+
+['dragenter','dragover'].forEach(ev => dropzone.addEventListener(ev, e => {
+  e.preventDefault(); dropzone.classList.add('drag');
+}));
+['dragleave','drop'].forEach(ev => dropzone.addEventListener(ev, e => {
+  e.preventDefault(); dropzone.classList.remove('drag');
+}));
+dropzone.addEventListener('drop', e => {
+  if (e.dataTransfer?.files?.length) fileInput.files = e.dataTransfer.files;
+  onFile();
+});
+fileInput.addEventListener('change', onFile);
+function onFile() {
+  if (!fileInput.files[0]) return;
+  submitBtn.disabled = false;
+  const url = URL.createObjectURL(fileInput.files[0]);
+  document.getElementById('img-original').src = url;
+  document.getElementById('img-preprocessed').src = url;
+  document.getElementById('preview').style.display = '';
+  document.getElementById('dropzone').querySelector('h4').innerHTML =
+    `<em>${App.escapeHtml(fileInput.files[0].name)}</em> · click to choose another`;
+}
+
+// Reveal the matching file-upload drawer when a "requires-attachment" checkbox is ticked.
+document.querySelectorAll('input[data-expand]').forEach(cb => {
+  cb.addEventListener('change', () => {
+    const id = cb.dataset.expand;
+    const drawer = document.getElementById(id);
+    if (!drawer) return;
+    drawer.hidden = !cb.checked;
+    if (!cb.checked) {
+      // Clear any chosen file when the user unchecks
+      const fileIn = drawer.querySelector('input[type=file]');
+      if (fileIn) fileIn.value = '';
+      drawer.classList.remove('has-file');
+    }
+  });
+});
+// Mark a drawer as "file chosen" for visual feedback
+document.querySelectorAll('.attach-drawer input[type=file]').forEach(fi => {
+  fi.addEventListener('change', () => {
+    const drawer = fi.closest('.attach-drawer');
+    drawer.classList.toggle('has-file', !!fi.files.length);
+  });
+});
+
+function setStep(id, state) {
+  const el = document.getElementById(id);
+  el.classList.remove('active','done');
+  if (state) el.classList.add(state);
+}
+
+document.getElementById('form').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!fileInput.files[0]) { App.toast('Please choose an image first', 'warn'); return; }
+
+  const fd = new FormData();
+  fd.append('file', fileInput.files[0]);
+  for (const inp of e.target.elements) {
+    if (!inp.name) continue;
+    if (inp.type === 'checkbox') {
+      // Disabled "auto" checkboxes (like "Receipt attached") are still sent.
+      if (inp.checked) fd.append(inp.name, 'on');
+    } else if (inp.type === 'file') {
+      // pre_approval_file / attendee_list_file — send the first file if any
+      if (inp.files && inp.files[0]) fd.append(inp.name, inp.files[0]);
+    } else if (inp.value) {
+      fd.append(inp.name, inp.value);
+    }
+  }
+
+  ['p-ocr','p-policy','p-ml','p-decision'].forEach(id => setStep(id, ''));
+  setStep('p-upload', 'done');
+  setStep('p-ocr', 'active');
+  submitBtn.disabled = true; submitBtn.innerHTML = '<span class="spinner"></span> Processing...';
+  document.getElementById('verdict-holder').innerHTML = '';
+  document.getElementById('reasons').innerHTML = '';
+  try {
+    const res = await fetch('/api/submit', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) {
+      App.toast(data.error || data.detail || 'Submit failed', 'danger');
+      submitBtn.disabled = false; submitBtn.textContent = 'Submit claim →';
+      if (data.original_png_base64) {
+        document.getElementById('img-original').src = 'data:image/png;base64,' + data.original_png_base64;
+      }
+      if (data.preprocessed_png_base64) {
+        document.getElementById('img-preprocessed').src = 'data:image/png;base64,' + data.preprocessed_png_base64;
+      }
+      return;
+    }
+    renderResult(data);
+  } catch (err) {
+    App.toast('Request failed: ' + err.message, 'danger');
+    submitBtn.disabled = false; submitBtn.textContent = 'Submit claim →';
+  }
+});
+
+function renderResult(data) {
+  // Step animation
+  ['p-ocr','p-policy','p-ml','p-decision'].forEach(id => setStep(id, 'done'));
+  setStep('p-upload', 'done');
+
+  // Images
+  if (data.original_png_base64) document.getElementById('img-original').src = 'data:image/png;base64,' + data.original_png_base64;
+  if (data.preprocessed_png_base64) document.getElementById('img-preprocessed').src = 'data:image/png;base64,' + data.preprocessed_png_base64;
+
+  // OCR
+  if (data.ocr) {
+    const o = data.ocr;
+    const conf = o.confidence ?? 0;
+    const confClass = conf >= 0.7 ? 'high' : 'low';
+    const fields = [
+      ['Vendor', o.vendor], ['Date', o.date],
+      ['Amount', o.amount != null ? App.money(o.amount) : '—'],
+      ['Category', o.category],
+      ['Currency', o.currency],
+      ['Confidence', `<span class="conf ${confClass}">${(conf*100).toFixed(0)}%</span>`],
+    ];
+    document.getElementById('ocr-out').innerHTML = fields.map(([l,v]) =>
+      `<div class="ocr-field"><div class="ocr-label">${l}</div><div class="ocr-value">${v || '—'}</div></div>`
+    ).join('');
+    document.getElementById('ocr-panel').style.display = '';
+  }
+
+  // Verdict
+  const d = data.decision || {};
+  const s = (d.final_status || 'VALID').toUpperCase();
+  document.getElementById('verdict-holder').innerHTML = `
+    <div class="verdict-card ${s}">
+      <div class="vc-label">Final verdict</div>
+      <div class="vc-big">${s}</div>
+      <div class="vc-score">Action: ${d.action || '—'} · score ${(d.final_score ?? 0).toFixed(2)}</div>
+    </div>`;
+
+  // Reasons
+  const reasons = data.reasons || [];
+  document.getElementById('reasons').innerHTML = reasons.slice(0, 6).map(r =>
+    `<div class="reason ${r.severity}">
+       <div style="flex-shrink:0; font-size:10px; font-weight:600; color:var(--text-tertiary); min-width:40px">${r.severity}</div>
+       <div>${App.escapeHtml(r.message)}</div>
+     </div>`).join('');
+
+  submitBtn.disabled = false;
+  submitBtn.innerHTML = '✓ Submit another claim';
+  App.toast(`Verdict: ${s}`, s === 'VALID' ? 'ok' : (s === 'REJECTED' || s === 'FRAUDULENT' ? 'danger' : 'warn'));
+  setTimeout(() => submitBtn.textContent = 'Submit claim →', 1500);
+
+  // Add a "View in my claims" button right next to Submit so the user can
+  // jump to their updated dashboard immediately.
+  const row = document.querySelector('.submit-btn-row');
+  if (row && !document.getElementById('view-claims-btn')) {
+    const a = document.createElement('a');
+    a.id = 'view-claims-btn';
+    a.href = '/employee/dashboard';
+    a.className = 'btn btn-secondary btn-lg';
+    a.textContent = 'View in my claims →';
+    row.appendChild(a);
+  }
+
+  // Surface coercion warnings (ticked-but-no-file) as prominent toasts
+  (data.coercion_notes || []).forEach(n => App.toast('⚠️ ' + n, 'warn'));
+
+  // Twilio notifications banner
+  (data.notifications || []).forEach(n => {
+    if (n.trigger === 'ATTACHMENT_COERCED') return;  // already surfaced above
+    App.toast((n.placed ? '📞 Twilio called: ' : '⚠️ Twilio not placed: ') + n.trigger,
+              n.placed ? 'ok' : 'warn');
+  });
+}
+
+boot().catch(e => App.toast('Error: ' + e.message, 'danger'));
+</script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.page{background:var(--color-background-tertiary);padding:20px;font-family:var(--font-sans)}
+.breadcrumb{font-size:12px;color:var(--color-text-tertiary);margin-bottom:16px}
+.breadcrumb a{color:var(--color-text-secondary);text-decoration:none}
+.layout{display:grid;grid-template-columns:1fr 280px;gap:14px;align-items:start}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:18px;margin-bottom:12px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.claim-id{font-size:11px;color:var(--color-text-tertiary)}
+.verdict-banner{border-radius:10px;padding:14px 18px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;background:#FCEBEB;border:0.5px solid #F7C1C1}
+.verdict-left h2{font-size:18px;font-weight:500;color:#791F1F}
+.verdict-left p{font-size:12px;color:#A32D2D;margin-top:2px}
+.verdict-right{text-align:right}
+.score-big{font-size:28px;font-weight:500;color:#791F1F}
+.score-label{font-size:11px;color:#A32D2D}
+.receipt-ocr{display:grid;grid-template-columns:140px 1fr;gap:14px;align-items:start}
+.receipt-img{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;height:160px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px}
+.receipt-img span{font-size:11px;color:var(--color-text-tertiary)}
+.fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.field-row{padding:8px;background:var(--color-background-secondary);border-radius:6px}
+.field-label{font-size:10px;color:var(--color-text-tertiary);margin-bottom:3px}
+.field-value{font-size:13px;color:var(--color-text-primary);font-weight:500}
+.conf-pill{display:inline-block;padding:1px 5px;border-radius:3px;font-size:10px;margin-left:4px;vertical-align:middle}
+.c-high{background:#EAF3DE;color:#27500A}
+.c-med{background:#FAEEDA;color:#633806}
+.violation-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.violation-item:last-child{border-bottom:none}
+.v-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:500}
+.v-hard{background:#FCEBEB;color:#791F1F}
+.v-soft{background:#FAEEDA;color:#633806}
+.v-body{flex:1}
+.v-rule{font-size:12px;font-weight:500;color:var(--color-text-primary)}
+.v-reason{font-size:12px;color:var(--color-text-secondary);margin-top:2px}
+.v-tags{display:flex;gap:4px;margin-top:5px}
+.v-tag{font-size:10px;padding:1px 6px;border-radius:3px}
+.anomaly-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.anomaly-row:last-child{border-bottom:none}
+.anomaly-name{font-size:12px;color:var(--color-text-primary)}
+.anomaly-bar-wrap{flex:1;height:5px;background:var(--color-background-secondary);border-radius:3px;margin:0 10px;overflow:hidden}
+.anomaly-fill{height:100%;border-radius:3px}
+.anomaly-val{font-size:12px;color:var(--color-text-secondary);min-width:32px;text-align:right}
+.feature-chip{display:inline-block;padding:3px 8px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:4px;font-size:11px;color:var(--color-text-secondary);margin:3px 3px 0 0}
+.side-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:16px;margin-bottom:12px}
+.side-title{font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:12px}
+.meta-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.meta-row:last-child{border-bottom:none}
+.meta-key{font-size:12px;color:var(--color-text-secondary)}
+.meta-val{font-size:12px;color:var(--color-text-primary);font-weight:500}
+.audit-item{display:flex;gap:8px;margin-bottom:10px}
+.audit-dot{width:8px;height:8px;border-radius:50%;background:#185FA5;flex-shrink:0;margin-top:4px}
+.audit-dot.done{background:#639922}
+.audit-body p{font-size:12px;color:var(--color-text-primary)}
+.audit-body span{font-size:10px;color:var(--color-text-tertiary)}
+.approve-btn{width:100%;padding:9px;background:#3B6D11;color:white;border:none;border-radius:7px;font-size:13px;cursor:pointer;margin-bottom:6px}
+.reject-btn{width:100%;padding:9px;background:transparent;color:#A32D2D;border:0.5px solid #F7C1C1;border-radius:7px;font-size:13px;cursor:pointer;margin-bottom:6px}
+.comment-box{width:100%;font-size:12px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:6px;padding:8px;color:var(--color-text-primary);resize:none;min-height:60px;font-family:var(--font-sans)}
+.section-lbl{font-size:11px;font-weight:500;color:var(--color-text-secondary);margin-bottom:8px;margin-top:4px}
+</style>
+
+<div class="page">
+  <div class="breadcrumb">
+    <a href="#">Claims</a> &rsaquo; <a href="#">All claims</a> &rsaquo; CLM-10291
+  </div>
+
+  <div class="verdict-banner">
+    <div class="verdict-left">
+      <h2>REJECTED</h2>
+      <p>Hard policy violation — hotel exceeds ₹6,000/night cap · Anomaly score high</p>
+    </div>
+    <div class="verdict-right">
+      <div class="score-big">0.91</div>
+      <div class="score-label">fraud score</div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Receipt &amp; OCR output</span>
+          <span class="claim-id">Gemini Flash 2.0 · conf 0.91</span>
+        </div>
+        <div class="receipt-ocr">
+          <div class="receipt-img">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="6" y="3" width="20" height="26" rx="3" stroke="var(--color-border-secondary)" stroke-width="1.2"/><path d="M10 10h12M10 14h12M10 18h8" stroke="var(--color-border-tertiary)" stroke-width="1"/></svg>
+            <span>Receipt image</span>
+          </div>
+          <div class="fields-grid">
+            <div class="field-row"><div class="field-label">Vendor</div><div class="field-value">Taj Lands End<span class="conf-pill c-high">0.97</span></div></div>
+            <div class="field-row"><div class="field-label">Amount</div><div class="field-value">₹7,450<span class="conf-pill c-high">0.99</span></div></div>
+            <div class="field-row"><div class="field-label">Date</div><div class="field-value">2025-11-14<span class="conf-pill c-high">0.96</span></div></div>
+            <div class="field-row"><div class="field-label">Category</div><div class="field-value">LODGING<span class="conf-pill c-med">0.82</span></div></div>
+            <div class="field-row"><div class="field-label">Tax</div><div class="field-value">₹674.55<span class="conf-pill c-high">0.95</span></div></div>
+            <div class="field-row"><div class="field-label">Currency</div><div class="field-value">INR<span class="conf-pill c-high">0.99</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Policy violations</span><span style="font-size:11px;color:var(--color-text-tertiary)">Drools · 2 rules fired</span></div>
+        <div class="violation-item">
+          <div class="v-icon v-hard">H</div>
+          <div class="v-body">
+            <div class="v-rule">R010 — Lodging exceeds Mumbai cap</div>
+            <div class="v-reason">Hotel amount ₹7,450 exceeds the ₹6,000/night policy limit. Deduction: 100pts.</div>
+            <div class="v-tags">
+              <span class="v-tag" style="background:#FCEBEB;color:#791F1F">HARD FAIL</span>
+              <span class="v-tag" style="background:#F1EFE8;color:#444441">AUTO-REJECT</span>
+            </div>
+          </div>
+        </div>
+        <div class="violation-item">
+          <div class="v-icon v-soft">S</div>
+          <div class="v-body">
+            <div class="v-rule">R011 — Lodging not pre-approved</div>
+            <div class="v-reason">Hotel stays require manager pre-approval before travel. Deduction: 30pts.</div>
+            <div class="v-tags">
+              <span class="v-tag" style="background:#FAEEDA;color:#633806">SOFT FAIL</span>
+              <span class="v-tag" style="background:#F1EFE8;color:#444441">FLAG FOR REVIEW</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Anomaly detection</span><span style="font-size:11px;color:var(--color-text-tertiary)">Isolation Forest + Autoencoder</span></div>
+        <div class="anomaly-row">
+          <span class="anomaly-name">Isolation Forest score</span>
+          <div class="anomaly-bar-wrap"><div class="anomaly-fill" style="width:78%;background:#E24B4A"></div></div>
+          <span class="anomaly-val">0.78</span>
+        </div>
+        <div class="anomaly-row">
+          <span class="anomaly-name">Autoencoder reconstruction error</span>
+          <div class="anomaly-bar-wrap"><div class="anomaly-fill" style="width:81%;background:#E24B4A"></div></div>
+          <span class="anomaly-val">0.81</span>
+        </div>
+        <div class="anomaly-row">
+          <span class="anomaly-name">Combined anomaly score</span>
+          <div class="anomaly-bar-wrap"><div class="anomaly-fill" style="width:79.5%;background:#E24B4A"></div></div>
+          <span class="anomaly-val">0.80</span>
+        </div>
+        <div style="margin-top:10px">
+          <div class="section-lbl">Top contributing features</div>
+          <span class="feature-chip">amount_vs_category_avg</span>
+          <span class="feature-chip">vendor_repeat_count</span>
+          <span class="feature-chip">weekend_submission</span>
+          <span class="feature-chip">peer_group_deviation</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="side-card">
+        <div class="side-title">Claim metadata</div>
+        <div class="meta-row"><span class="meta-key">Employee</span><span class="meta-val">Priya Nair</span></div>
+        <div class="meta-row"><span class="meta-key">Employee ID</span><span class="meta-val">EMP-2847</span></div>
+        <div class="meta-row"><span class="meta-key">Department</span><span class="meta-val">Technology</span></div>
+        <div class="meta-row"><span class="meta-key">Submitted</span><span class="meta-val">14 Nov 2025</span></div>
+        <div class="meta-row"><span class="meta-key">Business trip</span><span class="meta-val">Yes</span></div>
+        <div class="meta-row"><span class="meta-key">Pre-approval</span><span class="meta-val" style="color:#A32D2D">No</span></div>
+        <div class="meta-row"><span class="meta-key">Policy score</span><span class="meta-val" style="color:#A32D2D">0 / 100</span></div>
+      </div>
+
+      <div class="side-card">
+        <div class="side-title">Audit log</div>
+        <div class="audit-item"><div class="audit-dot done"></div><div class="audit-body"><p>Image preprocessed</p><span>14 Nov · 14:02:11</span></div></div>
+        <div class="audit-item"><div class="audit-dot done"></div><div class="audit-body"><p>OCR completed · 6 fields</p><span>14 Nov · 14:02:14</span></div></div>
+        <div class="audit-item"><div class="audit-dot done"></div><div class="audit-body"><p>Policy: HARD_FAIL (R010, R011)</p><span>14 Nov · 14:02:16</span></div></div>
+        <div class="audit-item"><div class="audit-dot done"></div><div class="audit-body"><p>Anomaly: ANOMALOUS (0.80)</p><span>14 Nov · 14:02:17</span></div></div>
+        <div class="audit-item"><div class="audit-dot"></div><div class="audit-body"><p>Awaiting manager decision</p><span>Pending</span></div></div>
+      </div>
+
+      <div class="side-card">
+        <div class="side-title">Manager decision</div>
+        <textarea class="comment-box" placeholder="Add a comment for the employee…"></textarea>
+        <div style="margin-top:8px">
+          <button class="approve-btn">Override &amp; approve</button>
+          <button class="reject-btn">Confirm rejection</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
