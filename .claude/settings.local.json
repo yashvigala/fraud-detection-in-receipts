@@ -62,7 +62,13 @@
       "Bash(grep -c \"Saved \\\\${saved.length}\")",
       "Bash(python scripts/generate_test_policy_pdf.py)",
       "Bash(python scripts/generate_test_policy_pdfs.py)",
-      "Bash(gh auth *)"
+      "Bash(gh auth *)",
+      "Bash(git -c commit.gpgsign=false commit -q -m ' *)",
+      "Bash(gh repo *)",
+      "Bash(python -m playwright install chromium)",
+      "Bash(python -c \"from playwright.sync_api import sync_playwright; print\\('playwright OK'\\)\")",
+      "Bash(python scripts/capture_screenshots.py)",
+      "Bash(git add *)"
     ]
   }
 }

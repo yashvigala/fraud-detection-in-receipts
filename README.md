@@ -7,7 +7,9 @@ for managers. Built as a B.Tech final-year project.
 ![Status](https://img.shields.io/badge/status-demo-orange)
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![Java](https://img.shields.io/badge/java-21-red)
-![License](https://img.shields.io/badge/license-educational-green)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+![Landing page](screenshots/01_landing.png)
 
 ## What it does
 
@@ -105,6 +107,27 @@ Pick a role:
 - **Employee** — submit claims
 - **Manager** — review the queue
 - **Admin** — configure rules, view analytics, download PDF reports
+
+## Screenshots
+
+<table>
+  <tr>
+    <td width="50%"><b>Role picker (login)</b><br/><sub>Public · no passwords — fake auth for the demo</sub><br/><img src="screenshots/02_login.png" alt="Login page"/></td>
+    <td width="50%"><b>Employee dashboard</b><br/><sub>Personal claim history with verdict timeline</sub><br/><img src="screenshots/03_employee_dashboard.png" alt="Employee dashboard"/></td>
+  </tr>
+  <tr>
+    <td><b>Submit a claim</b><br/><sub>Live pipeline status + OCR fields + context checkboxes</sub><br/><img src="screenshots/04_submit_empty.png" alt="Claim submission page"/></td>
+    <td><b>Manager review queue</b><br/><sub>Filterable by status, department, attachment-flagged</sub><br/><img src="screenshots/05_manager_queue.png" alt="Manager queue"/></td>
+  </tr>
+  <tr>
+    <td><b>Admin dashboard</b><br/><sub>KPIs, spend by department, verdict mix</sub><br/><img src="screenshots/06_admin_dashboard.png" alt="Admin dashboard"/></td>
+    <td><b>Admin — rule editor</b><br/><sub>Grade / category / restrictions / custom rules, PDF & JSON import</sub><br/><img src="screenshots/07_admin_rules.png" alt="Admin onboarding / rules"/></td>
+  </tr>
+  <tr>
+    <td><b>Analytics</b><br/><sub>Trend, verdict pie, fraud rate by department, top categories</sub><br/><img src="screenshots/08_analytics.png" alt="Analytics"/></td>
+    <td><b>Claim detail</b><br/><sub>Full pipeline output: OCR, features, rule hits, ML scores, audit</sub><br/><img src="screenshots/09_claim_detail.png" alt="Claim detail"/></td>
+  </tr>
+</table>
 
 ## Key features
 
